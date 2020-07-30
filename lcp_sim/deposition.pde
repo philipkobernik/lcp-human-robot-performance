@@ -4,7 +4,7 @@ class Deposition {
   float partSize;
   
   Deposition(int x, int y, int z) {
-    partSize = resolutionDivisor* 0.9;
+    partSize = resolutionDivisor;
     part = createShape(BOX, partSize, partSize, partSize/2);
     part.translate(x, y, z*0.5);
   }

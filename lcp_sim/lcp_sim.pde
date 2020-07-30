@@ -28,20 +28,18 @@ import java.util.Calendar;
 import controlP5.*;
 ControlP5 cp5;
 
-Controller headPosXSlider;
-Controller headPosYSlider;
-Controller headPosZSlider;
+Controller headPosXSlider, headPosYSlider, headPosZSlider, resolutionDivisorSlider, frameIntervalSlider;
 
 // ------ mesh coloring ------
-color strokeColor;
+color strokeColor = color(100, 0, 50);
 
 // ------ mouse camera interaction ------
-int offsetX = 0, offsetY = 0, clickX = 0, clickY = 0, zoom = 200;
+int offsetX = 0, offsetY = 0, clickX = 0, clickY = 0, zoom = 350;
 float rotationX = 0, rotationZ = PI/4.0, targetRotationX = -PI/3, targetRotationZ = PI/4.0, clickRotationX, clickRotationZ; 
 
 // ------ image output ------
 int qualityFactor = 4;
-boolean showStroke = true;
+boolean showStroke = false;
 
 // ------ build plate ------
 int buildPlateWidth = 340;
@@ -58,10 +56,11 @@ int headPosZ = 105;
 int dropletDiameter = 3;
 int dropletHeight = 1;
 float depositionSpeed = 2.5; // per second
-int heightMax = 600; // 105;
+int heightMax = 1000; // 105;
 int verticalSteps = heightMax/dropletHeight;
 
-int resolutionDivisor = 4;
+int resolutionDivisor = 3;
+int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor];
 
 ShapeContainer container;
@@ -70,7 +69,7 @@ ShapeContainer container;
 boolean walkActive = true;
 PVector p;
 PVector pOld;
-float stepSize = 1.2;
+float stepSize = 0.3;
 float noiseScale = 100; 
 float noiseStrength = 20;
 float noiseZ, noiseZVelocity = 0.01;
@@ -81,16 +80,13 @@ float angle;
 void setup() {
   //fullScreen(P3D);
   size(800, 800, P3D);
+  smooth(4);
   colorMode(HSB, 360, 100, 100);
   cp5 = new ControlP5(this);
   cursor(CROSS);
   
   p = new PVector(buildPlateWidthHalf, buildPlateHeightHalf);
   pOld = p.copy();
-  smooth();
-
-  strokeColor = color(0, 0, 0);
-  smooth();
 
   headPosXSlider =  cp5.addSlider("headPosX")
     .setPosition(25, 1*25)
@@ -107,14 +103,28 @@ void setup() {
     .setRange(105, 170)
     .setColorLabel(0)
     ;
-  
+    
+  resolutionDivisorSlider = cp5.addSlider("resolutionDivisor")
+    .setPosition(25, 4*25)
+    .setRange(1, 8)
+    .setColorLabel(0)
+    .setNumberOfTickMarks(8)
+    ;
+    
+  frameIntervalSlider = cp5.addSlider("frameInterval")
+    .setPosition(25, 5*25)
+    .setRange(8, 1)
+    .setColorLabel(0)
+    .setNumberOfTickMarks(8)
+    .setLabel("deposition rate")
+    ;
+    
   container = new ShapeContainer(c);
 }
 
 void draw() {
 
-  if (showStroke) stroke(strokeColor);
-  else noStroke();
+  if (showStroke) { stroke(strokeColor); } else noStroke();
 
   background(0, 10, 100);
   lights();
@@ -133,26 +143,25 @@ void draw() {
   rotationZ += (targetRotationZ-rotationZ)*0.25;  
   rotateX(-rotationX);
   rotateZ(-rotationZ); 
-
-
+    
   if (walkActive) {
     angle = noise(p.x/noiseScale, p.y/noiseScale, noiseZ) * noiseStrength;
     p.x += cos(angle) * stepSize;
     p.y += sin(angle) * stepSize;
     
-    headPosX = int(p.x);
-    headPosY = int(p.y);
+    headPosXSlider.setValue(int(p.x));
+    headPosYSlider.setValue(int(p.y));
 
     deposit(headPosX, headPosY);
     
     // offscreen wrap
-    if (p.x<10) p.x=pOld.x=325;
-    if (p.x>330) p.x=pOld.x=15;
-    if (p.y<10) p.y=pOld.y=265;
-    if (p.y>270) p.y=pOld.y=15;
+    if (p.x<5*resolutionDivisor) p.x=pOld.x=340-(6*resolutionDivisor);
+    if (p.x>340-(5*resolutionDivisor)) p.x=pOld.x=6*resolutionDivisor;
+    if (p.y<5*resolutionDivisor) p.y=pOld.y=280-(6*resolutionDivisor);
+    if (p.y>280-(5*resolutionDivisor)) p.y=pOld.y=6*resolutionDivisor;
     
     pOld.set(p);
-    noiseZ += noiseZVelocity;
+    noiseZ += noiseZVelocity*2;
     
   } else {
 
@@ -172,28 +181,33 @@ void draw() {
 }
 
 void deposit(int x, int y) {
-  // search the column
+  if (frameCount % frameInterval == 0) {
+    
+  // search the column at x,y from the top to the bottom
+
   for(int z = verticalSteps/resolutionDivisor -1; z>-1; z--) {
     int lowResX = floor(float(x)/resolutionDivisor);
     int lowResY = floor(float(y)/resolutionDivisor);
     int lowResZ = floor(float(z)/resolutionDivisor);
 
-    if (
+    if ( // if any deposition found in this column or neighboring column, add deposition by stacking
     c[lowResX][lowResY][lowResZ] ||
     c[lowResX+1][lowResY+1][lowResZ] ||
     c[lowResX-1][lowResY-1][lowResZ] ||
     c[lowResX+1][lowResY-1][lowResZ] ||
     c[lowResX-1][lowResY+1][lowResZ] ||
     
-    c[lowResX+2][lowResY][lowResZ] ||
-    c[lowResX-2][lowResY][lowResZ] ||
-    c[lowResX][lowResY-2][lowResZ] ||
-    c[lowResX][lowResY+2][lowResZ] ||
+    // expands the neighbor-search radius
+    //c[lowResX+2][lowResY+2][lowResZ] ||
+    //c[lowResX-2][lowResY-2][lowResZ] ||
+    //c[lowResX+2][lowResY-2][lowResZ] ||
+    //c[lowResX-2][lowResY+2][lowResZ] ||
     z==0) {
       c[floor(float(x)/resolutionDivisor)][floor(float(y)/resolutionDivisor)][floor(float(z)/resolutionDivisor) + 1] = true;
       container.deposit(x, y, z);
       break;
     }
+  }
   }
 }
 
@@ -203,7 +217,7 @@ void drawDeposition() {
 }
 
 boolean mousingControls() {
-  return mouseX < 200 && mouseY < 100;
+  return mouseX < 200 && mouseY < 200;
 }
 
 void drawFloor() {
@@ -222,7 +236,7 @@ void mousePressed() {
   clickX = mouseX;
   clickY = mouseY;
   clickRotationX = rotationX;
-  clickRotationZ = rotationZ;
+  clickRotationZ = rotationZ;  
 }
 
 void keyPressed() {
@@ -239,15 +253,15 @@ void keyReleased() {
 }
 
 void reset() {
-  for(int x=0; x<c.length; x++) {
-        for(int y=0; y<c[x].length; y++) {
-          for(int z=0; z<c[x][y].length; z++) {
-            c[x][y][z] = false;
-          }
-        }
-      }
-      
+  c = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor];  
   container = new ShapeContainer(c);
+}
+
+void controlEvent(ControlEvent theEvent) {
+  if(theEvent.getName() == "resolutionDivisor") {
+    reset();
+    stepSize = map(resolutionDivisor, 1, 8, 0.1, 0.75);
+  }
 }
 
 String timestamp() {
