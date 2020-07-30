@@ -28,7 +28,7 @@ import java.util.Calendar;
 import controlP5.*;
 ControlP5 cp5;
 
-Controller headPosXSlider, headPosYSlider, headPosZSlider, resolutionDivisorSlider, frameIntervalSlider;
+Controller headPosXSlider, headPosYSlider, headPosZSlider, resolutionDivisorSlider, frameIntervalSlider, instructionsLabel;
 
 // ------ mesh coloring ------
 color strokeColor = color(100, 0, 50);
@@ -118,6 +118,13 @@ void setup() {
     .setNumberOfTickMarks(8)
     .setLabel("deposition rate")
     ;
+    
+    instructionsLabel = cp5.addTextlabel("label")
+      .setText("W key toggles perlin walk \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
+      .setPosition(25, 6*25)
+      .setColorValue(0xff000000)
+      .setFont(createFont("Courier",15))
+      ;
     
   container = new ShapeContainer(c);
 }
