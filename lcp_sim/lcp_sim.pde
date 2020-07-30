@@ -1,6 +1,15 @@
 
 /**
- * creates a terrain like mesh based on noise values.
+ * listens for LCP control data via OSC, renders a simulation of LCP deposition behavior
+ * 
+ * OSC Inteface Vibe Proposal:
+ * /lcp/control/pos
+ *   - list of three floats: x, y, z
+ * /lcp/control/flow
+ *   - one float:
+ *     -> 0.0: off
+ *     -> 0.5: droplets
+ *     -> 1.0: stream
  * 
  * MOUSE
  * position x/y + left drag   : LCP head position
