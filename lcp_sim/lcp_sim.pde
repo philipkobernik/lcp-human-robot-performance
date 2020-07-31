@@ -134,7 +134,7 @@ void setup() {
     .setFont(createFont("Courier", 15))
     ;
 
-  container = new ShapeContainer(c);
+  container = new ShapeContainer();
 }
 
 void draw() {
@@ -271,7 +271,7 @@ void keyReleased() {
 
 void reset() {
   c = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];  
-  container = new ShapeContainer(c);
+  container = new ShapeContainer();
 }
 
 String timestamp() {
@@ -296,14 +296,16 @@ void oscEvent(OscMessage theOscMessage) {
     }
   } 
 
-  if (theOscMessage.checkAddrPattern("/lcp/control/flow")==true) {
-    /* check if the typetag is the right one. */
-    if (theOscMessage.checkTypetag("f")) {
-      /* parse theOscMessage and extract the values from the osc message arguments. */
-      float flow = theOscMessage.get(0).floatValue();  
+  //if (theOscMessage.checkAddrPattern("/lcp/control/flow")==true) {
+  //  /* check if the typetag is the right one. */
+  //  if (theOscMessage.checkTypetag("f")) {
+  //    /* parse theOscMessage and extract the values from the osc message arguments. */
+  //    float flow = theOscMessage.get(0).floatValue();  
 
-      flowNormalizedSlider.setValue(flow);      
-      return;
-    }
-  }
+  //    flowNormalizedSlider.setValue(flow);      
+  //    return;
+  //  }
+  //}
+  
+  return;
 }

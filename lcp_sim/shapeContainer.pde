@@ -1,17 +1,17 @@
 class ShapeContainer {
-  ArrayList<Deposition> depos;
+  ArrayList<Deposition> artifact;
 
   PShape depositionShape;
 
-  ShapeContainer(boolean[][][] c) {
-    depos = new ArrayList<Deposition>();
+  ShapeContainer() {
+    artifact = new ArrayList<Deposition>();
     depositionShape = createShape(PShape.GROUP);
   }
   
   void deposit(int x, int y, int z) {
-    Deposition p = new Deposition(x, y, z);
-    depos.add(p);
-    depositionShape.addChild(p.getShape());
+    Deposition d = new Deposition(x, y, z);
+    artifact.add(d);
+    depositionShape.addChild(d.getShape());
   }
 
   void display() {
