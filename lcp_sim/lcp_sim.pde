@@ -50,6 +50,8 @@ int buildPlateHeightHalf = buildPlateHeight/2;
 // ------ state: head ------
 int headPosX = buildPlateWidth/2;
 int headPosY = buildPlateHeight/2;
+float headPosXSmooth = float(headPosX);
+float headPosYSmooth = float(headPosY);
 int headPosZ = 105;
 
 // ------ deposition ------
@@ -146,10 +148,10 @@ void draw() {
     targetRotationX = min(max(clickRotationX + offsetY/float(width) * TWO_PI, -HALF_PI), HALF_PI);
     targetRotationZ = clickRotationZ + offsetX/float(height) * TWO_PI;
   }
-  rotationX += (targetRotationX-rotationX)*0.25; 
-  rotationZ += (targetRotationZ-rotationZ)*0.25;  
+  rotationX += (targetRotationX-rotationX)*0.1; 
+  rotationZ += (targetRotationZ-rotationZ)*0.1;  
   rotateX(-rotationX);
-  rotateZ(-rotationZ); 
+  rotateZ(-rotationZ);
     
   if (walkActive) {
     angle = noise(p.x/noiseScale, p.y/noiseScale, noiseZ) * noiseStrength;
@@ -158,8 +160,11 @@ void draw() {
     
     headPosXSlider.setValue(int(p.x));
     headPosYSlider.setValue(int(p.y));
+    
+    headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
+    headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
 
-    deposit(headPosX, headPosY);
+    deposit(int(headPosXSmooth), int(headPosYSmooth));
     
     // offscreen wrap
     if (p.x<5*resolutionDivisor) p.x=pOld.x=340-(6*resolutionDivisor);
@@ -174,9 +179,11 @@ void draw() {
 
     // ------ head movement ------
     if (mousePressed && mouseButton==LEFT && !mousingControls()) {
-      headPosX = int(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth));
-      headPosY = int(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight));
-      deposit(headPosX, headPosY);
+      headPosXSlider.setValue(int(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth)));
+      headPosYSlider.setValue(int(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight)));
+      headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
+      headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
+      deposit(int(headPosXSmooth), int(headPosYSmooth));
     }
   }
 
@@ -210,7 +217,7 @@ void deposit(int x, int y) {
     //c[lowResX+2][lowResY-2][lowResZ] ||
     //c[lowResX-2][lowResY+2][lowResZ] ||
     z==0) {
-      c[floor(float(x)/resolutionDivisor)][floor(float(y)/resolutionDivisor)][floor(float(z)/resolutionDivisor) + 1] = true;
+      c[lowResX][lowResY][lowResZ + 1] = true;
       container.deposit(x, y, z);
       break;
     }
