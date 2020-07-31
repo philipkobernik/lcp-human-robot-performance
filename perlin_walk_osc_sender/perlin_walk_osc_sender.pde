@@ -62,10 +62,16 @@ void draw() {
     noiseZ += noiseZVelocity*2;
     
     OscMessage position = new OscMessage("/lcp/control/position");
+
     position.add(p.x);
     position.add(p.y);
-    position.add(105 + 1.0);
+    position.add(105.0);
     oscP5.send(position, simulatorIAC); 
+    
+    OscMessage flow = new OscMessage("/lcp/control/flow");
+    flow.add(map(p.x, 0, buildPlateWidth, 0.0, 1.0));
+    oscP5.send(flow, simulatorIAC);
+
     background(128);
   } else {
     background(0);
