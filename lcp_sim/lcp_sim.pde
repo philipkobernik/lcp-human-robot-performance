@@ -54,6 +54,8 @@ int buildPlateWidthHalf = buildPlateWidth/2;
 int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
+int buildPlateDepth = 1000; // 105;
+
 // ------ state: head ------
 float headPosX = buildPlateWidth/2;
 float headPosY = buildPlateHeight/2;
@@ -62,14 +64,14 @@ float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
 
 // ------ deposition ------
-int dropletDiameter = 3;
-int dropletHeight = 1;
-float depositionSpeed = 2.5; // per second
-float flowNormalized = 0.5;
-int heightMax = 1000; // 105;
-int verticalSteps = heightMax/dropletHeight;
+int dropletWidth = 3;
+int dropletHeight = 2;
+int verticalSteps = buildPlateDepth/dropletHeight;
 
-int resolutionDivisor = 3;
+float depositionSpeed = 2.5; // per second
+float flowNormalized = 0.5; //<>//
+
+int resolutionDivisor = 1;
 int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor];
 
@@ -158,8 +160,8 @@ void draw() {
     deposit(int(headPosXSmooth), int(headPosYSmooth));
   } else {
     // ------ head movement ------
-    headPosXSlider.setValue(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth));
-    headPosYSlider.setValue(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight));
+    headPosXSlider.setValue(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth-1));
+    headPosYSlider.setValue(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight-1));
     headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
     headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
 
@@ -186,8 +188,13 @@ void deposit(float x, float y) {
       int lowResX = round(x/resolutionDivisor);
       int lowResY = round(y/resolutionDivisor);
       int lowResZ = round(float(z)/resolutionDivisor);
+      lowResX = constrain(lowResX, 0, (buildPlateWidth/resolutionDivisor) - 1);  
+      lowResY = constrain(lowResY, 0, (buildPlateHeight/resolutionDivisor) - 1);
+      
+      //[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor]
 
       if ( // if any deposition found in this column or neighboring column, add deposition by stacking
+        lowResZ-1==0 ||
         c[lowResX][lowResY][lowResZ-1] ||
         c[lowResX+1][lowResY+1][lowResZ-1] ||
         c[lowResX-1][lowResY-1][lowResZ-1] ||
@@ -196,14 +203,14 @@ void deposit(float x, float y) {
         c[lowResX+1][lowResY][lowResZ-1] ||
         c[lowResX-1][lowResY][lowResZ-1] ||
         c[lowResX][lowResY-1][lowResZ-1] ||
-        c[lowResX][lowResY+1][lowResZ-1] ||
+        c[lowResX][lowResY+1][lowResZ-1]
 
         // expands the neighbor-search radius
         //c[lowResX+2][lowResY][lowResZ-1] ||
         //c[lowResX-2][lowResY][lowResZ-1] ||
         //c[lowResX][lowResY-2][lowResZ-1] ||
-        //c[lowResX][lowResY+2][lowResZ-1] ||
-        lowResZ-1==0) {
+        //c[lowResX][lowResY+2][lowResZ-1]
+        ) {
         c[lowResX][lowResY][lowResZ] = true;
         container.deposit(lowResX, lowResY, lowResZ);
         break;
@@ -223,13 +230,13 @@ boolean mousingControls() {
 }
 
 void drawFloor() {
-  fill(floorColor);
+  stroke(floorColor);
   box(buildPlateWidth, buildPlateHeight, 1);
 }
 
 void drawHead() {
   pushMatrix();
-  fill(headColor);
+  stroke(headColor);
   translate(-buildPlateWidth/2, -buildPlateHeight/2);
   translate(headPosX, headPosY, 25 + headPosZ);
   box(3, 3, 50);
