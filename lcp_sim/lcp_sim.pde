@@ -281,7 +281,7 @@ String timestamp() {
 void oscEvent(OscMessage theOscMessage) {
   if (!oscInputActive) return;
 
-  if (theOscMessage.checkAddrPattern("/lcp/control/position")==true) {
+  if (theOscMessage.checkAddrPattern("/lcp/control/position")) {
     /* check if the typetag is the right one. */
     if (theOscMessage.checkTypetag("fff")) {
       /* parse theOscMessage and extract the values from the osc message arguments. */
@@ -296,16 +296,16 @@ void oscEvent(OscMessage theOscMessage) {
     }
   } 
 
-  //if (theOscMessage.checkAddrPattern("/lcp/control/flow")==true) {
-  //  /* check if the typetag is the right one. */
-  //  if (theOscMessage.checkTypetag("f")) {
-  //    /* parse theOscMessage and extract the values from the osc message arguments. */
-  //    float flow = theOscMessage.get(0).floatValue();  
+  if (theOscMessage.checkAddrPattern("/lcp/control/flow")) {
+    /* check if the typetag is the right one. */
+    if (theOscMessage.checkTypetag("f")) {
+      /* parse theOscMessage and extract the values from the osc message arguments. */
+      float flow = theOscMessage.get(0).floatValue();  
 
-  //    flowNormalizedSlider.setValue(flow);      
-  //    return;
-  //  }
-  //}
+      flowNormalizedSlider.setValue(flow);      
+      return;
+    }
+  }
   
   return;
 }
