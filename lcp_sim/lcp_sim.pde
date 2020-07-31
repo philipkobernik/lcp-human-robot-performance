@@ -32,7 +32,7 @@ import netP5.*;
 OscP5 oscP5;
 ControlP5 cp5;
 
-Controller headPosXSlider, headPosYSlider, headPosZSlider, resolutionDivisorSlider, flowNormalizedSlider, instructionsLabel;
+Controller headPosXSlider, headPosYSlider, headPosZSlider, flowNormalizedSlider, instructionsLabel;
 
 // ------ mesh coloring ------
 color strokeColor = color(255);
@@ -71,9 +71,8 @@ int verticalSteps = buildPlateDepth/dropletHeight;
 float depositionSpeed = 2.5; // per second
 float flowNormalized = 0.5; //<>//
 
-int resolutionDivisor = 1;
 int frameInterval = 4;
-boolean c[][][] = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor];
+boolean c[][][] = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];
 
 ShapeContainer container;
 
@@ -106,15 +105,8 @@ void setup() {
     .setColorLabel(0)
     ;
 
-  resolutionDivisorSlider = cp5.addSlider("resolutionDivisor")
-    .setPosition(25, 4*25)
-    .setRange(1, 8)
-    .setColorLabel(0)
-    .setNumberOfTickMarks(8)
-    ;
-
   flowNormalizedSlider = cp5.addSlider("flowNormalized")
-    .setPosition(25, 5*25)
+    .setPosition(25, 4*25)
     .setRange(0.0, 1.0)
     .setColorLabel(0)
     .setLabel("deposition flow rate")
@@ -122,7 +114,7 @@ void setup() {
 
   instructionsLabel = cp5.addTextlabel("label")
     .setText("O key toggles OSC input \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
-    .setPosition(25, 6*25)
+    .setPosition(25, 5*25)
     .setColorValue(0xff000000)
     .setFont(createFont("Courier", 15))
     ;
@@ -184,15 +176,13 @@ void deposit(float x, float y) {
 
     // search the column at x,y from the top to the bottom
 
-    for (int z = verticalSteps/resolutionDivisor -1; z>-1; z--) {
-      int lowResX = round(x/resolutionDivisor);
-      int lowResY = round(y/resolutionDivisor);
-      int lowResZ = round(float(z)/resolutionDivisor);
-      lowResX = constrain(lowResX, 0, (buildPlateWidth/resolutionDivisor) - 1);  
-      lowResY = constrain(lowResY, 0, (buildPlateHeight/resolutionDivisor) - 1);
+    for (int z = verticalSteps - 1; z>-1; z--) {
+      int lowResX = round(x);
+      int lowResY = round(y);
+      int lowResZ = round(float(z));
+      lowResX = constrain(lowResX, 0, (buildPlateWidth) - 1);  
+      lowResY = constrain(lowResY, 0, (buildPlateHeight) - 1);
       
-      //[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor]
-
       if ( // if any deposition found in this column or neighboring column, add deposition by stacking
         lowResZ-1==0 ||
         c[lowResX][lowResY][lowResZ-1] ||
@@ -264,14 +254,8 @@ void keyReleased() {
 }
 
 void reset() {
-  c = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeight/resolutionDivisor][verticalSteps/resolutionDivisor];  
+  c = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];  
   container = new ShapeContainer(c);
-}
-
-void controlEvent(ControlEvent theEvent) {
-  if (theEvent.getName() == "resolutionDivisor") {
-    reset();
-  }
 }
 
 String timestamp() {
