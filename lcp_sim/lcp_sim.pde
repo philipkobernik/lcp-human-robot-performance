@@ -219,7 +219,7 @@ void deposit(float x, float y) {
         c[lowResX][lowResY+2][lowResZ-1] ||
         lowResZ-1==0) {
         c[lowResX][lowResY][lowResZ] = true;
-        container.deposit(round(x), round(y), z);
+        container.deposit(lowResX, lowResY, lowResZ);
         break;
       }
     }
