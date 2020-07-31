@@ -1,9 +1,9 @@
-
+ //<>//
 /**
  * listens for LCP control data via OSC, renders a simulation of LCP deposition behavior
  * 
  * OSC Inteface Vibe Proposal:
- * /lcp/control/pos
+ * /lcp/control/position
  *   - list of three floats: x, y, z
  * /lcp/control/flow
  *   - one float:
@@ -32,7 +32,7 @@ import netP5.*;
 OscP5 oscP5;
 ControlP5 cp5;
 
-Controller headPosXSlider, headPosYSlider, headPosZSlider, flowNormalizedSlider, instructionsLabel;
+Controller headPosXSlider, headPosYSlider, headPosZSlider, flowNormalizedSlider, instructionsLabel, frameRateLabel, depositionRateLabel;
 
 // ------ mesh coloring ------
 color strokeColor = color(255);
@@ -62,6 +62,7 @@ float headPosY = buildPlateHeight/2;
 float headPosXSmooth = buildPlateWidth/2;
 float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
+float smoothFactor = 0.1;
 
 // ------ deposition ------
 int dropletWidth = 3;
@@ -69,7 +70,7 @@ int dropletHeight = 2;
 int verticalSteps = buildPlateDepth/dropletHeight;
 
 float depositionSpeed = 2.5; // per second
-float flowNormalized = 0.5; //<>//
+float flowNormalized = 0.5;
 
 int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];
@@ -112,10 +113,24 @@ void setup() {
     .setLabel("deposition flow rate")
     ;
 
-  instructionsLabel = cp5.addTextlabel("label")
+  instructionsLabel = cp5.addTextlabel("instructionsLabel")
     .setText("O key toggles OSC input \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
     .setPosition(25, 5*25)
     .setColorValue(0xff000000)
+    .setFont(createFont("Courier", 15))
+    ;
+
+  frameRateLabel = cp5.addTextlabel("frameRateLabel")
+    .setText("n/a")
+    .setPosition(25, 8*25)
+    .setColorValue(0xffaaaaaa)
+    .setFont(createFont("Courier", 15))
+    ;
+    
+  depositionRateLabel = cp5.addTextlabel("depositionRateLabel")
+    .setText("n/a")
+    .setPosition(25, 9*25)
+    .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
 
@@ -123,6 +138,7 @@ void setup() {
 }
 
 void draw() {
+  updateTextLabels();
 
   if (showStroke) { 
     stroke(strokeColor);
@@ -147,15 +163,15 @@ void draw() {
   rotateZ(-rotationZ);
 
   if (oscInputActive) {
-    headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
-    headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
+    headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
+    headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
     deposit(int(headPosXSmooth), int(headPosYSmooth));
   } else {
     // ------ head movement ------
     headPosXSlider.setValue(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth-1));
     headPosYSlider.setValue(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight-1));
-    headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
-    headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
+    headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
+    headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
 
     if (mousePressed && mouseButton==LEFT && !mousingControls()) {
       deposit(headPosXSmooth, headPosYSmooth);
@@ -171,7 +187,7 @@ void draw() {
 
 void deposit(float x, float y) {
   if (flowNormalized <= 0.0) return;
-  frameInterval = round(map(flowNormalized, 0.0, 1.0, 8.0, 1.0));
+  frameInterval = round(map(flowNormalized, 0.0, 1.0, 16, 4));
   if (frameCount % frameInterval == 0) {
 
     // search the column at x,y from the top to the bottom
@@ -182,7 +198,7 @@ void deposit(float x, float y) {
       int lowResZ = round(float(z));
       lowResX = constrain(lowResX, 0, (buildPlateWidth) - 1);  
       lowResY = constrain(lowResY, 0, (buildPlateHeight) - 1);
-      
+
       if ( // if any deposition found in this column or neighboring column, add deposition by stacking
         lowResZ-1==0 ||
         c[lowResX][lowResY][lowResZ-1] ||
@@ -213,6 +229,13 @@ void drawDeposition() {
   translate(-buildPlateWidthHalf, -buildPlateHeightHalf);
   stroke(color(0, 0, 200));
   container.display();
+}
+
+void updateTextLabels() {
+  frameRateLabel.setStringValue(floor(frameRate) + " fps");
+  
+  float depoRate = (frameRate/frameInterval) * dropletHeight;
+  depositionRateLabel.setStringValue(nf(depoRate, 0, 1) + " mm/s");
 }
 
 boolean mousingControls() {
