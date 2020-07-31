@@ -16,7 +16,8 @@
  * right-click drag  : camera controls
  * 
  * KEYS
- * l                          : toogle displaly strokes on/off
+ * o                          : toggle OSC input active/bypass
+ * l                          : toggle displaly strokes on/off
  * space                      : new noise seed
  * +                          : zoom in
  * -                          : zoom out
@@ -75,7 +76,7 @@ float flowNormalized = 0.5;
 int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];
 
-ShapeContainer container;
+Artifact artifact;
 
 // ------ OSC ------
 boolean oscInputActive = true;
@@ -134,7 +135,7 @@ void setup() {
     .setFont(createFont("Courier", 15))
     ;
 
-  container = new ShapeContainer();
+  artifact = new Artifact();
 }
 
 void draw() {
@@ -211,7 +212,7 @@ void deposit(float x, float y) {
         c[lowResX][lowResY+1][lowResZ-1]
         ) {
         c[lowResX][lowResY][lowResZ] = true;
-        container.deposit(lowResX, lowResY, lowResZ);
+        artifact.deposit(lowResX, lowResY, lowResZ);
         break;
       }
     }
@@ -221,7 +222,7 @@ void deposit(float x, float y) {
 void drawDeposition() {
   translate(-buildPlateWidthHalf, -buildPlateHeightHalf);
   stroke(color(0, 0, 200));
-  container.display();
+  artifact.display();
 }
 
 void updateTextLabels() {
@@ -271,7 +272,7 @@ void keyReleased() {
 
 void reset() {
   c = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];  
-  container = new ShapeContainer();
+  artifact = new Artifact();
 }
 
 String timestamp() {

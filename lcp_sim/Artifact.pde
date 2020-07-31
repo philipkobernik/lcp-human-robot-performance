@@ -1,20 +1,20 @@
-class ShapeContainer {
+class Artifact {
   ArrayList<Deposition> artifact;
 
-  PShape depositionShape;
+  PShape shapeGroup;
 
-  ShapeContainer() {
+  Artifact() {
     artifact = new ArrayList<Deposition>();
-    depositionShape = createShape(PShape.GROUP);
+    shapeGroup = createShape(PShape.GROUP);
   }
   
   void deposit(int x, int y, int z) {
     Deposition d = new Deposition(x, y, z);
     artifact.add(d);
-    depositionShape.addChild(d.getShape());
+    shapeGroup.addChild(d.getShape());
   }
 
   void display() {
-    shape(depositionShape);
+    shape(shapeGroup);
   }
 }
