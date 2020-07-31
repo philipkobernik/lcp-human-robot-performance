@@ -12,8 +12,8 @@
  *     -> 1.0: stream
  * 
  * MOUSE
- * position x/y + left drag   : LCP head position
- * position x/y + right drag  : camera controls
+ * left-click drag   : LCP head position
+ * right-click drag  : camera controls
  * 
  * KEYS
  * l                          : toogle displaly strokes on/off
@@ -54,7 +54,7 @@ int buildPlateWidthHalf = buildPlateWidth/2;
 int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
-int buildPlateDepth = 1000; // 105;
+int buildPlateDepth = 105;
 
 // ------ state: head ------
 float headPosX = buildPlateWidth/2;
@@ -187,11 +187,10 @@ void draw() {
 
 void deposit(float x, float y) {
   if (flowNormalized <= 0.0) return;
-  frameInterval = round(map(flowNormalized, 0.0, 1.0, 16, 4));
+  frameInterval = round(map(flowNormalized, 0.0, 1.0, 30, 8));
   if (frameCount % frameInterval == 0) {
 
-    // search the column at x,y from the top to the bottom
-
+    // search the vertical column at x,y from the top to the bottom
     for (int z = verticalSteps - 1; z>-1; z--) {
       int lowResX = round(x);
       int lowResY = round(y);
@@ -210,12 +209,6 @@ void deposit(float x, float y) {
         c[lowResX-1][lowResY][lowResZ-1] ||
         c[lowResX][lowResY-1][lowResZ-1] ||
         c[lowResX][lowResY+1][lowResZ-1]
-
-        // expands the neighbor-search radius
-        //c[lowResX+2][lowResY][lowResZ-1] ||
-        //c[lowResX-2][lowResY][lowResZ-1] ||
-        //c[lowResX][lowResY-2][lowResZ-1] ||
-        //c[lowResX][lowResY+2][lowResZ-1]
         ) {
         c[lowResX][lowResY][lowResZ] = true;
         container.deposit(lowResX, lowResY, lowResZ);
@@ -232,7 +225,7 @@ void drawDeposition() {
 }
 
 void updateTextLabels() {
-  frameRateLabel.setStringValue(floor(frameRate) + " fps");
+  frameRateLabel.setStringValue(round(frameRate) + " fps");
   
   float depoRate = (frameRate/frameInterval) * dropletHeight;
   depositionRateLabel.setStringValue(nf(depoRate, 0, 1) + " mm/s");
