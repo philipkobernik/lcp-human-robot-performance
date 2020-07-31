@@ -82,7 +82,7 @@ float angle;
 void setup() {
   //fullScreen(P3D);
   size(800, 800, P3D);
-  smooth(4);
+  smooth(8);
   colorMode(HSB, 360, 100, 100);
   cp5 = new ControlP5(this);
   cursor(CROSS);
@@ -213,10 +213,10 @@ void deposit(float x, float y) {
         c[lowResX-1][lowResY+1][lowResZ-1] ||
 
         // expands the neighbor-search radius
-        c[lowResX+2][lowResY][lowResZ-1] ||
-        c[lowResX-2][lowResY][lowResZ-1] ||
-        c[lowResX][lowResY-2][lowResZ-1] ||
-        c[lowResX][lowResY+2][lowResZ-1] ||
+        //c[lowResX+2][lowResY][lowResZ-1] ||
+        //c[lowResX-2][lowResY][lowResZ-1] ||
+        //c[lowResX][lowResY-2][lowResZ-1] ||
+        //c[lowResX][lowResY+2][lowResZ-1] ||
         lowResZ-1==0) {
         c[lowResX][lowResY][lowResZ] = true;
         container.deposit(lowResX, lowResY, lowResZ);
