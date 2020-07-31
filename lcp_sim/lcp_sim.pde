@@ -48,10 +48,10 @@ int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
 // ------ state: head ------
-int headPosX = buildPlateWidth/2;
-int headPosY = buildPlateHeight/2;
-float headPosXSmooth = float(headPosX);
-float headPosYSmooth = float(headPosY);
+float headPosX = buildPlateWidth/2;
+float headPosY = buildPlateHeight/2;
+float headPosXSmooth = buildPlateWidth/2;
+float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
 
 // ------ deposition ------
@@ -86,7 +86,7 @@ void setup() {
   colorMode(HSB, 360, 100, 100);
   cp5 = new ControlP5(this);
   cursor(CROSS);
-  
+
   p = new PVector(buildPlateWidthHalf, buildPlateHeightHalf);
   pOld = p.copy();
 
@@ -105,14 +105,14 @@ void setup() {
     .setRange(105, 170)
     .setColorLabel(0)
     ;
-    
+
   resolutionDivisorSlider = cp5.addSlider("resolutionDivisor")
     .setPosition(25, 4*25)
     .setRange(1, 8)
     .setColorLabel(0)
     .setNumberOfTickMarks(8)
     ;
-    
+
   frameIntervalSlider = cp5.addSlider("frameInterval")
     .setPosition(25, 5*25)
     .setRange(8, 1)
@@ -120,20 +120,22 @@ void setup() {
     .setNumberOfTickMarks(8)
     .setLabel("deposition rate")
     ;
-    
-    instructionsLabel = cp5.addTextlabel("label")
-      .setText("W key toggles perlin walk \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
-      .setPosition(25, 6*25)
-      .setColorValue(0xff000000)
-      .setFont(createFont("Courier",15))
-      ;
-    
+
+  instructionsLabel = cp5.addTextlabel("label")
+    .setText("W key toggles perlin walk \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
+    .setPosition(25, 6*25)
+    .setColorValue(0xff000000)
+    .setFont(createFont("Courier", 15))
+    ;
+
   container = new ShapeContainer(c);
 }
 
 void draw() {
 
-  if (showStroke) { stroke(strokeColor); } else noStroke();
+  if (showStroke) { 
+    stroke(strokeColor);
+  } else noStroke();
 
   background(0, 10, 100);
   lights();
@@ -152,38 +154,37 @@ void draw() {
   rotationZ += (targetRotationZ-rotationZ)*0.1;  
   rotateX(-rotationX);
   rotateZ(-rotationZ);
-    
+
   if (walkActive) {
     angle = noise(p.x/noiseScale, p.y/noiseScale, noiseZ) * noiseStrength;
     p.x += cos(angle) * stepSize;
     p.y += sin(angle) * stepSize;
-    
-    headPosXSlider.setValue(int(p.x));
-    headPosYSlider.setValue(int(p.y));
-    
+
+    headPosXSlider.setValue(p.x);
+    headPosYSlider.setValue(p.y);
+
     headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
     headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
 
     deposit(int(headPosXSmooth), int(headPosYSmooth));
-    
+
     // offscreen wrap
     if (p.x<5*resolutionDivisor) p.x=pOld.x=340-(6*resolutionDivisor);
     if (p.x>340-(5*resolutionDivisor)) p.x=pOld.x=6*resolutionDivisor;
     if (p.y<5*resolutionDivisor) p.y=pOld.y=280-(6*resolutionDivisor);
     if (p.y>280-(5*resolutionDivisor)) p.y=pOld.y=6*resolutionDivisor;
-    
+
     pOld.set(p);
     noiseZ += noiseZVelocity*2;
-    
   } else {
 
     // ------ head movement ------
     if (mousePressed && mouseButton==LEFT && !mousingControls()) {
-      headPosXSlider.setValue(int(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth)));
-      headPosYSlider.setValue(int(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight)));
+      headPosXSlider.setValue(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth));
+      headPosYSlider.setValue(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight));
       headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
       headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
-      deposit(int(headPosXSmooth), int(headPosYSmooth));
+      deposit(headPosXSmooth, headPosYSmooth);
     }
   }
 
@@ -194,34 +195,34 @@ void draw() {
   popMatrix();
 }
 
-void deposit(int x, int y) {
+void deposit(float x, float y) {
   if (frameCount % frameInterval == 0) {
-    
-  // search the column at x,y from the top to the bottom
 
-  for(int z = verticalSteps/resolutionDivisor -1; z>-1; z--) {
-    int lowResX = floor(float(x)/resolutionDivisor);
-    int lowResY = floor(float(y)/resolutionDivisor);
-    int lowResZ = floor(float(z)/resolutionDivisor);
+    // search the column at x,y from the top to the bottom
 
-    if ( // if any deposition found in this column or neighboring column, add deposition by stacking
-    c[lowResX][lowResY][lowResZ] ||
-    c[lowResX+1][lowResY+1][lowResZ] ||
-    c[lowResX-1][lowResY-1][lowResZ] ||
-    c[lowResX+1][lowResY-1][lowResZ] ||
-    c[lowResX-1][lowResY+1][lowResZ] ||
-    
-    // expands the neighbor-search radius
-    //c[lowResX+2][lowResY+2][lowResZ] ||
-    //c[lowResX-2][lowResY-2][lowResZ] ||
-    //c[lowResX+2][lowResY-2][lowResZ] ||
-    //c[lowResX-2][lowResY+2][lowResZ] ||
-    z==0) {
-      c[lowResX][lowResY][lowResZ + 1] = true;
-      container.deposit(x, y, z);
-      break;
+    for (int z = verticalSteps/resolutionDivisor -1; z>-1; z--) {
+      int lowResX = round(x/resolutionDivisor);
+      int lowResY = round(y/resolutionDivisor);
+      int lowResZ = round(float(z)/resolutionDivisor);
+
+      if ( // if any deposition found in this column or neighboring column, add deposition by stacking
+        c[lowResX][lowResY][lowResZ-1] ||
+        c[lowResX+1][lowResY+1][lowResZ-1] ||
+        c[lowResX-1][lowResY-1][lowResZ-1] ||
+        c[lowResX+1][lowResY-1][lowResZ-1] ||
+        c[lowResX-1][lowResY+1][lowResZ-1] ||
+
+        // expands the neighbor-search radius
+        c[lowResX+2][lowResY][lowResZ-1] ||
+        c[lowResX-2][lowResY][lowResZ-1] ||
+        c[lowResX][lowResY-2][lowResZ-1] ||
+        c[lowResX][lowResY+2][lowResZ-1] ||
+        lowResZ-1==0) {
+        c[lowResX][lowResY][lowResZ] = true;
+        container.deposit(round(x), round(y), z);
+        break;
+      }
     }
-  }
   }
 }
 
@@ -250,7 +251,7 @@ void mousePressed() {
   clickX = mouseX;
   clickY = mouseY;
   clickRotationX = rotationX;
-  clickRotationZ = rotationZ;  
+  clickRotationZ = rotationZ;
 }
 
 void keyPressed() {
@@ -272,7 +273,7 @@ void reset() {
 }
 
 void controlEvent(ControlEvent theEvent) {
-  if(theEvent.getName() == "resolutionDivisor") {
+  if (theEvent.getName() == "resolutionDivisor") {
     reset();
     stepSize = map(resolutionDivisor, 1, 8, 0.1, 0.75);
   }
