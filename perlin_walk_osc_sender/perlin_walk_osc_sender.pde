@@ -20,7 +20,7 @@ int buildPlateHeightHalf = buildPlateHeight/2;
 boolean walkActive = true;
 PVector p;
 PVector pOld;
-float stepSize = 0.3;
+float stepSize = 1;
 float noiseScale = 100; 
 float noiseStrength = 20;
 float noiseZ, noiseZVelocity = 0.01;

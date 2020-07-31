@@ -26,6 +26,10 @@
 import processing.opengl.*;
 import java.util.Calendar;
 import controlP5.*;
+import oscP5.*;
+import netP5.*;
+  
+OscP5 oscP5;
 ControlP5 cp5;
 
 Controller headPosXSlider, headPosYSlider, headPosZSlider, resolutionDivisorSlider, frameIntervalSlider, instructionsLabel;
@@ -67,17 +71,8 @@ boolean c[][][] = new boolean[buildPlateWidth/resolutionDivisor][buildPlateHeigh
 
 ShapeContainer container;
 
-// ------ perlin walk ------
-boolean walkActive = true;
-PVector p;
-PVector pOld;
-float stepSize = 0.3;
-float noiseScale = 100; 
-float noiseStrength = 20;
-float noiseZ, noiseZVelocity = 0.01;
-float angle;
-
-
+// ------ OSC ------
+boolean oscInputActive = true;
 
 void setup() {
   //fullScreen(P3D);
@@ -85,10 +80,8 @@ void setup() {
   smooth(8);
   colorMode(HSB, 360, 100, 100);
   cp5 = new ControlP5(this);
+  oscP5 = new OscP5(this,10420);
   cursor(CROSS);
-
-  p = new PVector(buildPlateWidthHalf, buildPlateHeightHalf);
-  pOld = p.copy();
 
   headPosXSlider =  cp5.addSlider("headPosX")
     .setPosition(25, 1*25)
@@ -122,7 +115,7 @@ void setup() {
     ;
 
   instructionsLabel = cp5.addTextlabel("label")
-    .setText("W key toggles perlin walk \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
+    .setText("O key toggles OSC input \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
     .setPosition(25, 6*25)
     .setColorValue(0xff000000)
     .setFont(createFont("Courier", 15))
@@ -155,27 +148,10 @@ void draw() {
   rotateX(-rotationX);
   rotateZ(-rotationZ);
 
-  if (walkActive) {
-    angle = noise(p.x/noiseScale, p.y/noiseScale, noiseZ) * noiseStrength;
-    p.x += cos(angle) * stepSize;
-    p.y += sin(angle) * stepSize;
-
-    headPosXSlider.setValue(p.x);
-    headPosYSlider.setValue(p.y);
-
+  if (oscInputActive) {
     headPosXSmooth += (headPosX-headPosXSmooth)*0.05;
     headPosYSmooth += (headPosY-headPosYSmooth)*0.05;
-
     deposit(int(headPosXSmooth), int(headPosYSmooth));
-
-    // offscreen wrap
-    if (p.x<5*resolutionDivisor) p.x=pOld.x=340-(6*resolutionDivisor);
-    if (p.x>340-(5*resolutionDivisor)) p.x=pOld.x=6*resolutionDivisor;
-    if (p.y<5*resolutionDivisor) p.y=pOld.y=280-(6*resolutionDivisor);
-    if (p.y>280-(5*resolutionDivisor)) p.y=pOld.y=6*resolutionDivisor;
-
-    pOld.set(p);
-    noiseZ += noiseZVelocity*2;
   } else {
 
     // ------ head movement ------
@@ -262,7 +238,7 @@ void keyPressed() {
 void keyReleased() {  
   if (key == 's' || key == 'S') saveFrame(timestamp()+"_####.png");
   if (key == 'l' || key == 'L') showStroke = !showStroke;
-  if (key == 'w' || key == 'W') walkActive = !walkActive;
+  if (key == 'o' || key == 'O') oscInputActive = !oscInputActive;
   if (key == 'r' || key == 'R') reset();
   if (key == ' ') noiseSeed((int) random(100000));
 }
@@ -275,10 +251,26 @@ void reset() {
 void controlEvent(ControlEvent theEvent) {
   if (theEvent.getName() == "resolutionDivisor") {
     reset();
-    stepSize = map(resolutionDivisor, 1, 8, 0.1, 0.75);
   }
 }
 
 String timestamp() {
   return String.format("%1$ty%1$tm%1$td_%1$tH%1$tM%1$tS", Calendar.getInstance());
+}
+
+void oscEvent(OscMessage theOscMessage) {
+  if(oscInputActive && theOscMessage.checkAddrPattern("/lcp/control/position")==true) {
+    /* check if the typetag is the right one. */
+    if(theOscMessage.checkTypetag("fff")) {
+      /* parse theOscMessage and extract the values from the osc message arguments. */
+      float xIn = theOscMessage.get(0).floatValue();  
+      float yIn = theOscMessage.get(1).floatValue();
+      float zIn = theOscMessage.get(2).floatValue();
+      
+      headPosXSlider.setValue(xIn);
+      headPosYSlider.setValue(yIn);
+      headPosZSlider.setValue(zIn);      
+      return;
+    }  
+  } 
 }
