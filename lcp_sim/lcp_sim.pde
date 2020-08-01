@@ -83,7 +83,7 @@ boolean oscInputActive = true;
 
 void setup() {
   //fullScreen(P3D);
-  size(800, 800, P3D);
+  size(960, 1050, P3D);
   //ortho(-width/3, width/3, -height/3, height/3);
   smooth(8);
   colorMode(HSB, 360, 100, 100);
@@ -127,7 +127,7 @@ void setup() {
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
-    
+
   depositionRateLabel = cp5.addTextlabel("depositionRateLabel")
     .setText("n/a")
     .setPosition(25, 9*25)
@@ -187,8 +187,8 @@ void draw() {
 }
 
 void deposit(float x, float y) {
-  if (flowNormalized <= 0.0) return;
-  frameInterval = round(map(flowNormalized, 0.0, 1.0, 30, 8));
+  if (flowNormalized <= 0.0) return; // no flow!
+  frameInterval = round(map(flowNormalized, 0.0, 1.0, 20, 6));
   if (frameCount % frameInterval == 0) {
 
     // search the vertical column at x,y from the top to the bottom
@@ -227,7 +227,7 @@ void drawDeposition() {
 
 void updateTextLabels() {
   frameRateLabel.setStringValue(round(frameRate) + " fps");
-  
+
   float depoRate = (frameRate/frameInterval) * dropletHeight;
   depositionRateLabel.setStringValue(nf(depoRate, 0, 1) + " mm/s");
 }
@@ -286,16 +286,19 @@ void oscEvent(OscMessage theOscMessage) {
     /* check if the typetag is the right one. */
     if (theOscMessage.checkTypetag("fff")) {
       /* parse theOscMessage and extract the values from the osc message arguments. */
-      float xIn = theOscMessage.get(0).floatValue();  
+      float xIn = theOscMessage.get(0).floatValue();
       float yIn = theOscMessage.get(1).floatValue();
       float zIn = theOscMessage.get(2).floatValue();
 
-      headPosXSlider.setValue(xIn);
-      headPosYSlider.setValue(yIn);
-      headPosZSlider.setValue(zIn);      
+      float xConstrained = constrain(xIn, 0, buildPlateWidth-1);
+      float yConstrained = constrain(yIn, 0, buildPlateHeight-1);
+
+      headPosXSlider.setValue(xConstrained);
+      headPosYSlider.setValue(yConstrained);
+      headPosZSlider.setValue(zIn);
       return;
     }
-  } 
+  }
 
   if (theOscMessage.checkAddrPattern("/lcp/control/flow")) {
     /* check if the typetag is the right one. */
@@ -307,6 +310,6 @@ void oscEvent(OscMessage theOscMessage) {
       return;
     }
   }
-  
+
   return;
 }
