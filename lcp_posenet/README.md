@@ -1,6 +1,8 @@
 # LCP Posenet Tracker
 
-estimate poses in real-time from a webcam video stream, send pose keypoints to firebase
+estimate poses in real-time from a webcam video stream, send pose keypoints to firebase.
+
+online at: https://lcp-posenet.surge.sh/camera.html
 
 <img src="https://raw.githubusercontent.com/tensorflow/tfjs-models/master/posenet/demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
 

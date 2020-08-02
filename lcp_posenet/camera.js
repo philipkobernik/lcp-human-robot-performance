@@ -37,10 +37,10 @@ const stats = new Stats();
  *
  */
 async function setupCamera() {
-  // if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-  //   throw new Error(
-  //       'Browser API navigator.mediaDevices.getUserMedia not available');
-  // }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error(
+        'Browser API navigator.mediaDevices.getUserMedia not available');
+  }
 
   const video = document.getElementById('video');
   video.width = videoWidth;
