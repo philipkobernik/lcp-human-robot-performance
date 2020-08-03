@@ -63,7 +63,7 @@ float headPosY = buildPlateHeight/2;
 float headPosXSmooth = buildPlateWidth/2;
 float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
-float smoothFactor = 0.1;
+float smoothFactor = 0.5;
 
 // ------ deposition ------
 int dropletWidth = 3;
@@ -139,7 +139,7 @@ void setup() {
 }
 
 void draw() {
-  updateTextLabels();
+  updateTextLabels(); // frame rate, deposition rate
 
   if (showStroke) { 
     stroke(strokeColor);
@@ -148,8 +148,9 @@ void draw() {
   background(0, 10, 100);
   lights();
 
-  // ------ set view ------
   pushMatrix();
+  
+  // ------ camera control ------
   translate(width*0.5, height*0.5, zoom);
 
   if (mousePressed && mouseButton==RIGHT) {
@@ -162,26 +163,39 @@ void draw() {
   rotationZ += (targetRotationZ-rotationZ)*0.1;  
   rotateX(-rotationX);
   rotateZ(-rotationZ);
+  // ------ end camera control ------
 
+
+  // ------ head movement & deposition ------
   if (oscInputActive) {
+    // execute the smoothing function (slider controller values already updated by osc event handler)
     headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
     headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
+    
+    // deposit the droplet
     deposit(int(headPosXSmooth), int(headPosYSmooth));
   } else {
-    // ------ head movement ------
-    headPosXSlider.setValue(map(constrain(mouseX, 0, height), 0.0, width, 0, buildPlateWidth-1));
-    headPosYSlider.setValue(map(constrain(mouseY, 0, height), 0.0, width, 0, buildPlateHeight-1));
+    // mouse coords update head position
+    headPosXSlider.setValue(map(mouseX, 0.0, width, 0, buildPlateWidth-1));
+    headPosYSlider.setValue(map(mouseY, 0.0, width, 0, buildPlateHeight-1));
+    
+    // execute the smoothing function (slider controller values already updated by osc event handler)
     headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
     headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
 
     if (mousePressed && mouseButton==LEFT && !mousingControls()) {
+      // deposit the droplet IF mouse pressed
       deposit(headPosXSmooth, headPosYSmooth);
     }
   }
+  // ------ end head movement & deposition ------
 
+
+  // ------ render floor, head, crystals ------
   drawFloor();
   drawHead();
   drawDeposition();
+  // ------ end render floor, head, crystals ------
 
   popMatrix();
 }
@@ -193,16 +207,17 @@ void deposit(float x, float y) {
 
     // search the vertical column at x,y from the top to the bottom
     for (int z = verticalSteps - 1; z>-1; z--) {
-      int lowResX = round(x);
+      int lowResX = round(x); 
       int lowResY = round(y);
-      int lowResZ = round(float(z));
-      lowResX = constrain(lowResX, 0, (buildPlateWidth) - 1);  
-      lowResY = constrain(lowResY, 0, (buildPlateHeight) - 1);
+      int lowResZ = z;
+      
+      lowResX = constrain(lowResX, 1, buildPlateWidth - 2);  //-2 because 0-based-index + 1-element-buffer
+      lowResY = constrain(lowResY, 1, buildPlateHeight - 2);
 
       if ( // if any deposition found in this column or neighboring column, add deposition by stacking
-        lowResZ-1==0 ||
-        c[lowResX][lowResY][lowResZ-1] ||
-        c[lowResX+1][lowResY+1][lowResZ-1] ||
+        lowResZ-1==0 || // the floor is below!
+        c[lowResX][lowResY][lowResZ-1] || // this column
+        c[lowResX+1][lowResY+1][lowResZ-1] || // neighboring columns
         c[lowResX-1][lowResY-1][lowResZ-1] ||
         c[lowResX+1][lowResY-1][lowResZ-1] ||
         c[lowResX-1][lowResY+1][lowResZ-1] ||
@@ -211,7 +226,8 @@ void deposit(float x, float y) {
         c[lowResX][lowResY-1][lowResZ-1] ||
         c[lowResX][lowResY+1][lowResZ-1]
         ) {
-        c[lowResX][lowResY][lowResZ] = true;
+        // time to deposit material
+        c[lowResX][lowResY][lowResZ] = true; // mark presence of deposited material in 3d array
         artifact.deposit(lowResX, lowResY, lowResZ);
         break;
       }
@@ -290,11 +306,8 @@ void oscEvent(OscMessage theOscMessage) {
       float yIn = theOscMessage.get(1).floatValue();
       float zIn = theOscMessage.get(2).floatValue();
 
-      float xConstrained = constrain(xIn, 0, buildPlateWidth-1);
-      float yConstrained = constrain(yIn, 0, buildPlateHeight-1);
-
-      headPosXSlider.setValue(xConstrained);
-      headPosYSlider.setValue(yConstrained);
+      headPosXSlider.setValue(xIn);
+      headPosYSlider.setValue(yIn);
       headPosZSlider.setValue(zIn);
       return;
     }
