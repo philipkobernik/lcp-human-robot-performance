@@ -22,6 +22,9 @@ int buildPlateHeightHalf = buildPlateHeight/2;
 
 // ------ other ------
 boolean flash = false;
+String troubleshootingText = "not receiving OSC... \n"
+    + "1. is posenet tracker running? \n"
+    + "2. is firebase-osc-relay running?";
 
 
 void setup() {
@@ -42,10 +45,10 @@ void setup() {
   simulatorIAC = new NetAddress("127.0.0.1", 10420);
   
   oscInLabel = cp5.addTextlabel("oscLabel")
-    .setText("n/a")
+    .setText(troubleshootingText)
     .setPosition(25, 1*25)
     .setColorValue(0xffaaaaaa)
-    .setFont(createFont("Courier", 25))
+    .setFont(createFont("Courier", 17))
     ;
 }
 
@@ -59,7 +62,12 @@ void draw() {
     oscInLabel.setStringValue("<--> receiving OSC");
     flash = false;
   } else {
+   setTextTroubleshooting();
   }
+}
+
+void setTextTroubleshooting() {
+  oscInLabel.setStringValue(troubleshootingText);
 }
 
 void keyReleased() {  
