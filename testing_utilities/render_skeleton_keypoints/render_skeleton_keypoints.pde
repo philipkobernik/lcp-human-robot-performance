@@ -107,39 +107,16 @@ void keyReleased() {
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
-  flash = true; // any osc message received
-  if (theOscMessage.checkTypetag("fff")) {
-    String part = theOscMessage.addrPattern().split("/")[3];
-    keypoints.put(part, new PVector(theOscMessage.get(0).floatValue(), theOscMessage.get(1).floatValue()));
+  println("RECEIVED");
+  if(theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
+    flash = true; // post osc message received
+
+    for(int i=0; i<101; i+=6) {
+      String part = theOscMessage.get(i+1).stringValue();
+      float score = theOscMessage.get(i+2).floatValue();
+      float x = theOscMessage.get(i+3).floatValue();
+      float y = theOscMessage.get(i+4).floatValue();
+      keypoints.put(part, new PVector(x, y, score));
+    }
   }
-  //if (theOscMessage.checkAddrPattern("/lcp/tracking/nose")) {
-  //  /* check if the typetag is the right one. */
-  //  if (theOscMessage.checkTypetag("fff")) {
-  //    
-  //    /* parse theOscMessage and extract the values from the osc message arguments. */
-  //    float x = theOscMessage.get(0).floatValue();  
-  //    float y = theOscMessage.get(1).floatValue();
-  //    float score = theOscMessage.get(2).floatValue();
-
-  //    float xOut = map(x, 0, 600, 0, buildPlateWidth-1);
-  //    float yOut = map(y, 0, 500, 0, buildPlateHeight-1);
-
-  //    OscMessage position = new OscMessage("/lcp/control/position");
-
-  //    position.add(xOut);
-  //    position.add(yOut);
-  //    position.add(105.0);
-  //    oscP5.send(position, simulatorIAC); 
-
-  //    OscMessage flow = new OscMessage("/lcp/control/flow");
-  //    if (score > 0.65) {
-  //      flow.add(map(score, 0.65, 1.0, 0.2, 1.0));
-  //    } else {
-  //      flow.add(0.0);
-  //    }
-  //    oscP5.send(flow, simulatorIAC);
-
-  //    return;
-  //  }
-  //}
 }

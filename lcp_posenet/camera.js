@@ -437,12 +437,7 @@ function detectPoseInRealTime(video, net) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
 
           // loop keypoints and send each to a firebase ref!
-          keypoints.forEach(({score, part, position}) => {
-            db.ref(part).set({
-              score,
-              position
-            });
-          });
+          db.ref("default").set(keypoints);
 
         }
         if (guiState.output.showSkeleton) {

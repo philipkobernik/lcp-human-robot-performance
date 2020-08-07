@@ -16,7 +16,7 @@ var firebaseConfig = {
 
   firebase.initializeApp(firebaseConfig);
   var db = firebase.database();
-  var rootRef = db.ref();
+  var rootRef = db.ref("default"); // TODO: add args on startup to examine a certain user's stream
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -30,30 +30,34 @@ udpPort.open();
 
 rootRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
+  
+  var partsArray = keypoints.map(part => {
+    return [
+      {
+        type: "s",
+        value: part.part
+      },
+      {
+        type: "f",
+        value: part.score
+      },
+      {
+        type: "f",
+        value: part.position.x
+      },
+      {
+        type: "f",
+        value: part.position.y
+      }
+    ];
+  })
 
-  for (var part in keypoints) {
-    // send part data as OSC over udp
-    var userData = keypoints[part];
-    udpPort.send({
-      address: `/lcp/tracking/${part}`,
-      args: [
-        {
-          type: "f",
-          value: userData.position.x
-        },
-        {
-          type: "f",
-          value: userData.position.y
-        },
-        {
-          type: "f",
-          value: userData.score
-        }
-      ]
-    });
-  }
+  udpPort.send({
+    address: `/lcp/tracking/pose`,
+    args: partsArray
+  });
 });
 
-console.log("\nwelcome to lcp-firebase-osc-relay!\n")
+console.log("\nwelcome to firebase_osc_relay!\n")
 
 console.log("relaying pose data from firebase to localhost:10419 ...")
