@@ -107,7 +107,6 @@ void keyReleased() {
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
-  println("RECEIVED");
   if(theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
     flash = true; // post osc message received
 
