@@ -88,26 +88,23 @@ void draw() {
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
+
 void oscEvent(OscMessage theOscMessage) {
+  if(theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
+    inFlash = true; // post osc message received
 
-  if (theOscMessage.checkTypetag("fff")) { // if osc message has 3 floats
-
-    String[] parts = theOscMessage.addrPattern().split("/");
-    if (parts.length < 4) return; // if address pattern doesn't look right-- early return
-
-    if (parts[1].equals("lcp") && parts[2].equals("tracking")) {
-      inFlash = true;
-
-      // looks like we're dealing with the right message-- store the part coords and score
-      String part = parts[3]; // "nose" or "rightAnkle"
-      float x = theOscMessage.get(0).floatValue();
-      float y = theOscMessage.get(1).floatValue();
-      float score = theOscMessage.get(2).floatValue();
-      keypoints.put(part, new PVector(x, y));
-
-      // now send some OSC messages to the LCP
-      if (part.equals("nose")) messagePrinter(x, y, score);
+    for(int i=0; i<101; i+=6) {
+      String part = theOscMessage.get(i+1).stringValue();
+      float score = theOscMessage.get(i+2).floatValue();
+      float x = theOscMessage.get(i+3).floatValue();
+      float y = theOscMessage.get(i+4).floatValue();
+      keypoints.put(part, new PVector(x, y, score)); // score is stored as third component of the PVector
     }
+    
+    // now send some OSC messages to the LCP
+    PVector nose = keypoints.get("nose");
+    
+    messagePrinter(nose.x, nose.y, nose.z); // score is stored as third component of the PVector
   }
 }
 
