@@ -20,7 +20,7 @@ boolean flash = false;
 String troubleshootingText = "If not receiving OSC: \n"
   + "1. is posenet tracker running? \n"
   + "2. is firebase-osc-relay running?";
-  
+
 
 
 // Note the HashMap's "key" is a String and "value" is an Integer
@@ -56,7 +56,7 @@ void setup() {
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
-    
+
   frameRateLabel = cp5.addTextlabel("frameRateLabel")
     .setText("n/a")
     .setPosition(25, 5*25)
@@ -79,20 +79,22 @@ void draw() {
   } else {
     oscInLabel.setStringValue("OSC input: [ ]");
   }
-  
+
   drawKeypoints();
 }
 
 void drawKeypoints() {
-  for(PVector point : keypoints.values()){
-    float r = map(point.x, 0, 600, 64, 255);
-    float g = map(point.y, 0, 500, 64, 255);
-    float b = 100;
-    
-    //fill(random(128)+64, random(128)+64, random(128)+64);
-    fill(r, g, b);
+  for (PVector point : keypoints.values()) {
+    if (point.z > 0.5) {
+      float r = map(point.x, 0, 600, 64, 255);
+      float g = map(point.y, 0, 500, 64, 255);
+      float b = 100;
 
-    ellipse(point.x, point.y, random(6)+13, random(6)+13);
+      //fill(random(128)+64, random(128)+64, random(128)+64);
+      fill(r, g, b);
+
+      ellipse(point.x, point.y, random(6)+13, random(6)+13);
+    }
   }
 }
 
@@ -107,10 +109,10 @@ void keyReleased() {
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
-  if(theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
+  if (theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
     flash = true; // post osc message received
 
-    for(int i=0; i<101; i+=6) {
+    for (int i=0; i<101; i+=6) {
       String part = theOscMessage.get(i+1).stringValue();
       float score = theOscMessage.get(i+2).floatValue();
       float x = theOscMessage.get(i+3).floatValue();
