@@ -26,7 +26,7 @@ HashMap<String, PVector> keypoints = new HashMap<String, PVector>();
 
 
 void setup() {
-  size(400, 400);
+  size(600, 500);
   cp5 = new ControlP5(this);
 
   /* start oscP5, listening for incoming messages at port 10419 */
@@ -85,7 +85,24 @@ void draw() {
   }
   
   
+  drawKeypoints();
 }
+
+void drawKeypoints() {
+  for (PVector point : keypoints.values()) {
+    if (point.z > 0.5) {
+      float r = map(point.x, 0, 600, 64, 255);
+      float g = map(point.y, 0, 500, 64, 255);
+      float b = 100;
+
+      //fill(random(128)+64, random(128)+64, random(128)+64);
+      fill(r, g, b);
+
+      ellipse(point.x, point.y, random(6)+13, random(6)+13);
+    }
+  }
+}
+
 
 /* incoming osc message are forwarded to the oscEvent method. */
 
