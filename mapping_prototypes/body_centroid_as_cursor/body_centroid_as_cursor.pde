@@ -107,8 +107,7 @@ void drawKeypoints() {
 void oscEvent(OscMessage theOscMessage) {
   float sumX = 0;
   float sumY = 0;
-  int countX = 0;
-  int countY = 0;
+  int partCount = 0;
   if (theOscMessage.typetag().length() == 102 && theOscMessage.checkAddrPattern("/lcp/tracking/pose")) { // 17 arrays * 6 typetag chars per array
     inFlash = true; // post osc message received
 
@@ -121,17 +120,21 @@ void oscEvent(OscMessage theOscMessage) {
       if (score > 0.5) {
         sumX += x;
         sumY += y;
-        countX++;
-        countY++;
+        partCount++;
       }
       keypoints.put(part, new PVector(x, y, score)); // score is stored as third component of the PVector
     }
 
     // now send some OSC messages to the LCP
     PVector nose = keypoints.get("nose");
-
-    PVector centroid = new PVector(sumX/countX, sumY/countY);
-      messagePrinter(centroid.x, centroid.y, countX > 0); // score is stored as third component of the PVector
+    
+    if(partCount > 0) {
+      PVector centroid = new PVector(sumX/partCount, sumY/partCount);
+      messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
+    } else {
+      // no parts are visible -- dancer is offscreen or not detected!
+      messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
+    }
   }
 }
 
