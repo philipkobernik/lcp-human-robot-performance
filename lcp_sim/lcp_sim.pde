@@ -214,10 +214,10 @@ void deposit(float x, float y) {
       lowResX = constrain(lowResX, 1, buildPlateWidth - 2);  //-2 because 0-based-index + 1-element-buffer
       lowResY = constrain(lowResY, 1, buildPlateHeight - 2);
 
-      if ( // if any deposition found in this column or neighboring column, add deposition by stacking
+      if ( // if deposition or floor is found one layer below in this column or neighboring column, add deposition by stacking
         lowResZ-1==0 || // the floor is below!
-        c[lowResX][lowResY][lowResZ-1] || // this column
-        c[lowResX+1][lowResY+1][lowResZ-1] || // neighboring columns
+        c[lowResX][lowResY][lowResZ-1] || // this column-- well, one layer below actually
+        c[lowResX+1][lowResY+1][lowResZ-1] || // immediate neighboring columns, one layer below
         c[lowResX-1][lowResY-1][lowResZ-1] ||
         c[lowResX+1][lowResY-1][lowResZ-1] ||
         c[lowResX-1][lowResY+1][lowResZ-1] ||
@@ -227,9 +227,17 @@ void deposit(float x, float y) {
         c[lowResX][lowResY+1][lowResZ-1]
         ) {
         // time to deposit material
+        
+        if(c[lowResX][lowResY][lowResZ]) {
+          break; // this column is full to the top. lets bounce out of here without depositing!
+        }
+        
+        // implicit "else"
         c[lowResX][lowResY][lowResZ] = true; // mark presence of deposited material in 3d array
-        artifact.deposit(lowResX, lowResY, lowResZ);
-        break;
+        
+        artifact.deposit(lowResX, lowResY, lowResZ); // deposit in the artifact object for rendering
+        
+        break; // no need to inspect any lower in the column!
       }
     }
   }
