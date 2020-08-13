@@ -63,7 +63,7 @@ float headPosY = buildPlateHeight/2;
 float headPosXSmooth = buildPlateWidth/2;
 float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
-float smoothFactor = 0.5;
+float smoothFactor = 0.25;
 
 // ------ deposition ------
 int dropletWidth = 3;
@@ -82,7 +82,7 @@ Artifact artifact;
 boolean oscInputActive = true;
 
 void setup() {
-  //fullScreen(P3D);
+  frameRate(30);
   size(960, 1050, P3D);
   //ortho(-width/3, width/3, -height/3, height/3);
   smooth(8);
@@ -202,7 +202,7 @@ void draw() {
 
 void deposit(float x, float y) {
   if (flowNormalized <= 0.0) return; // no flow!
-  frameInterval = round(map(flowNormalized, 0.0, 1.0, 20, 6));
+  frameInterval = round(map(flowNormalized, 0.0, 1.0, 40, 22));
   if (frameCount % frameInterval == 0) {
 
     // search the vertical column at x,y from the top to the bottom
