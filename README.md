@@ -25,50 +25,50 @@ Generators, calibration routines should live in here.
 (assumes repo is cloned into home folder `~/`)
 
 1. start firebase_osc_relay:
-  - press command-key + spacebar, type in `terminal`, press enter
-  - input `cd ~/lcp-human-robot-performance/firebase_osc_relay/` and press enter
-  - input `npm run start` and press enter
-  - terminal should say
-    - `relaying pose data from firebase to localhost:10419 ...`
+  * press command-key + spacebar, type in `terminal`, press enter
+  * input `cd ~/lcp-human-robot-performance/firebase_osc_relay/` and press enter
+  * input `npm run start` and press enter
+  * terminal should say
+    * `relaying pose data from firebase to localhost:10419 ...`
 
 
 2. start one of the mapping prototype:
-  - open finder
-  - click `lcp-human-robot-performance` under favorites bar
-  - navigate into `mapping_prototypes`
-  - navigate into one of the prototypes, like `body_as_cursor`
-  - double click the `body_as_cursor.pde` file
-  - click the play button to start the sketch
+  * open finder
+  * click `lcp-human-robot-performance` under favorites bar
+  * navigate into `mapping_prototypes`
+  * navigate into one of the prototypes, like `body_as_cursor`
+  * double click the `body_as_cursor.pde` file
+  * click the play button to start the sketch
 
 
 3. start the LCP simulator
-  - open finder
-  - click `lcp-human-robot-performance` under favorites bar
-  - navigate into `lcp_sim`
-  - double click the `lcp_sim.pdf` file
-  - click the play button to start the sketch
+  * open finder
+  * click `lcp-human-robot-performance` under favorites bar
+  * navigate into `lcp_sim`
+  * double click the `lcp_sim.pdf` file
+  * click the play button to start the sketch
 
 
 4. start the posenet tracker
-  - open [posenet camera tracker](https://lcp-posenet.surge.sh/camera.html)
-    - algorithm: `single-pose`
-    - architecture: `MobileNetv1`
-    - input resolution: `250` or `300`
+  * open [posenet camera tracker](https://lcp-posenet.surge.sh/camera.html)
+    * algorithm: `single-pose`
+    * architecture: `MobileNetv1`
+    * input resolution: `250` or `300`
 
 
 ## instructions for getting updates to the codebase
 1. stop running programs:
-  - if `firebase_osc_relay` is running, focus on that terminal window, then press `control`+`c`
-  - if any processing sketches are running, click the "stop" button to stop them
+  * if `firebase_osc_relay` is running, focus on that terminal window, then press `control`+`c`
+  * if any processing sketches are running, click the "stop" button to stop them
 
 
 2. navigate to the folder in terminal:
-  - press command-key + spacebar, type in `terminal`, press enter
-  - input `cd ~/lcp-human-robot-performance` and press enter
+  * press command-key + spacebar, type in `terminal`, press enter
+  * input `cd ~/lcp-human-robot-performance` and press enter
 
 
 3. pull in the new code changes
-  - input `git pull origin main`
+  * input `git pull origin main`
 
 
 4. now when you re-start the programs, they will be updated with new codes!
