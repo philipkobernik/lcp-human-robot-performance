@@ -77,7 +77,7 @@ int dropletHeight = 2;
 int verticalSteps = buildPlateDepth/dropletHeight;
 
 float depositionSpeed = 2.5; // per second
-float flowNormalized = 0.5;
+float flowNormalized = 1.0;
 
 int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];
