@@ -20,7 +20,7 @@ int buildPlateHeightHalf = buildPlateHeight/2;
 boolean walkActive = true;
 PVector p;
 PVector pOld;
-float stepSize = 1;
+float stepSize = 0.25;
 float noiseScale = 100; 
 float noiseStrength = 20;
 float noiseZ, noiseZVelocity = 0.01;
@@ -69,7 +69,7 @@ void draw() {
     oscP5.send(position, simulatorIAC); 
     
     OscMessage flow = new OscMessage("/lcp/control/flow");
-    flow.add(map(p.x, 0, buildPlateWidth, 0.0, 1.0));
+    flow.add(2.5);
     oscP5.send(flow, simulatorIAC);
 
     background(128);

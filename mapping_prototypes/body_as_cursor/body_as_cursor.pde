@@ -139,7 +139,7 @@ void messagePrinter(float x, float y, float score) {
 
   OscMessage flow = new OscMessage("/lcp/control/flow");
   if (score > 0.65) {
-    flow.add(map(score, 0.65, 1.0, 0.2, 1.0));
+    flow.add(2.5);
   } else {
     flow.add(0.0);
   }

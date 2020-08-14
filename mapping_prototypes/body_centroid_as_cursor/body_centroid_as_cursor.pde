@@ -152,7 +152,7 @@ void messagePrinter(float x, float y, boolean flowActive) {
 
   OscMessage flow = new OscMessage("/lcp/control/flow");
   if (flowActive) {
-    flow.add(1.0);
+    flow.add(2.5);
   } else {
     flow.add(0.0);
   }
