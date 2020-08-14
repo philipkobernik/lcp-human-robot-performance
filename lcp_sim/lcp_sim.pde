@@ -115,7 +115,7 @@ void setup() {
     ;
 
   instructionsLabel = cp5.addTextlabel("instructionsLabel")
-    .setText("O key toggles OSC input \nR key resets buildplate \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
+    .setText("O key toggles OSC input \nR key resets buildplate \nS key saves screenshot image \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
     .setPosition(25, 5*25)
     .setColorValue(0xff000000)
     .setFont(createFont("Courier", 15))
@@ -123,14 +123,14 @@ void setup() {
 
   frameRateLabel = cp5.addTextlabel("frameRateLabel")
     .setText("n/a")
-    .setPosition(25, 8*25)
+    .setPosition(25, 9*25)
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
 
   depositionRateLabel = cp5.addTextlabel("depositionRateLabel")
     .setText("n/a")
-    .setPosition(25, 9*25)
+    .setPosition(25, 10*25)
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
