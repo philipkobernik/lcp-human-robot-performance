@@ -34,7 +34,7 @@ OscP5 oscP5;
 ControlP5 cp5;
 
 Controller headPosXSlider, headPosYSlider, 
-  headPosZSlider, flowNormalizedSlider, 
+  headPosZSlider, flowSlider, 
   buildPlateScaleSlider, instructionsLabel, 
   frameRateLabel, depositionRateLabel;
 
@@ -77,7 +77,7 @@ int dropletHeight = 2;
 int verticalSteps = buildPlateDepth/dropletHeight;
 
 float depositionSpeed = 2.5; // per second
-float flowNormalized = 1.0;
+float flow = 2.5;
 
 int frameInterval = 4;
 boolean c[][][] = new boolean[buildPlateWidth][buildPlateHeight][verticalSteps];
@@ -113,11 +113,11 @@ void setup() {
     .setColorLabel(0)
     ;
 
-  flowNormalizedSlider = cp5.addSlider("flowNormalized")
+  flowSlider = cp5.addSlider("flow")
     .setPosition(25, 4*22)
-    .setRange(0.0, 1.0)
+    .setRange(0.0, 2.5)
     .setColorLabel(0)
-    .setLabel("deposition flow rate")
+    .setLabel("deposition rate mm/s")
     ;
   buildPlateScaleSlider = cp5.addSlider("buildPlateScale")
     .setPosition(25, 5*22)
@@ -128,21 +128,21 @@ void setup() {
 
   instructionsLabel = cp5.addTextlabel("instructionsLabel")
     .setText("O key toggles OSC input \nR key resets buildplate \nS key saves screenshot image \nright-click + drag to orbit scene \nleft-click + drag to deposit material")
-    .setPosition(25, 5*25)
+    .setPosition(22, 137)
     .setColorValue(0xff000000)
     .setFont(createFont("Courier", 15))
     ;
 
   frameRateLabel = cp5.addTextlabel("frameRateLabel")
     .setText("n/a")
-    .setPosition(25, 9*25)
+    .setPosition(22, 9*25)
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
 
   depositionRateLabel = cp5.addTextlabel("depositionRateLabel")
     .setText("n/a")
-    .setPosition(25, 10*25)
+    .setPosition(110, 9*25)
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
@@ -222,8 +222,8 @@ void setHeadPosition(float x, float y) {
 }
 
 void deposit(float x, float y) {
-  if (flowNormalized <= 0.0) return; // no flow!
-  frameInterval = round(map(flowNormalized, 0.0, 1.0, 40, 22));
+  if (flow <= 0.0) return; // no flow!
+  frameInterval = round(frameRate / (flow/dropletHeight));
   if (frameCount % frameInterval == 0) {
 
     // search the vertical column at x,y from the top to the bottom
@@ -274,6 +274,7 @@ void updateTextLabels() {
   frameRateLabel.setStringValue(round(frameRate) + " fps");
 
   float depoRate = (frameRate/frameInterval) * dropletHeight;
+
   depositionRateLabel.setStringValue(nf(depoRate, 0, 1) + " mm/s");
 }
 
@@ -347,7 +348,7 @@ void oscEvent(OscMessage theOscMessage) {
       /* parse theOscMessage and extract the values from the osc message arguments. */
       float flow = theOscMessage.get(0).floatValue();  
 
-      flowNormalizedSlider.setValue(flow);      
+      flowSlider.setValue(flow);      
       return;
     }
   }
