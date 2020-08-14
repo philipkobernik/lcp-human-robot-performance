@@ -33,7 +33,10 @@ import netP5.*;
 OscP5 oscP5;
 ControlP5 cp5;
 
-Controller headPosXSlider, headPosYSlider, headPosZSlider, flowNormalizedSlider, instructionsLabel, frameRateLabel, depositionRateLabel;
+Controller headPosXSlider, headPosYSlider, 
+  headPosZSlider, flowNormalizedSlider, 
+  buildPlateScaleSlider, instructionsLabel, 
+  frameRateLabel, depositionRateLabel;
 
 // ------ mesh coloring ------
 color strokeColor = color(255);
@@ -42,7 +45,7 @@ color headColor = color(240);
 
 
 // ------ mouse camera interaction ------
-int offsetX = 0, offsetY = 0, clickX = 0, clickY = 0, zoom = 450;
+int offsetX = 0, offsetY = 0, clickX = 0, clickY = 0, zoom = 690;
 float rotationX = 0, rotationZ = PI/4.0, targetRotationX = -PI/3, targetRotationZ = PI/4.0, clickRotationX, clickRotationZ; 
 
 // ------ image output ------
@@ -56,6 +59,9 @@ int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
 int buildPlateDepth = 105;
+float floorWidth = buildPlateWidth;
+float floorHeight = buildPlateHeight;
+float buildPlateScale = 1.0;
 
 // ------ state: head ------
 float headPosX = buildPlateWidth/2;
@@ -92,26 +98,32 @@ void setup() {
   cursor(CROSS);
 
   headPosXSlider =  cp5.addSlider("headPosX")
-    .setPosition(25, 1*25)
+    .setPosition(25, 1*22)
     .setRange(0, 340)
     .setColorLabel(0)
     ;
   headPosYSlider =  cp5.addSlider("headPosY")
-    .setPosition(25, 2*25)
+    .setPosition(25, 2*22)
     .setRange(0, 403-123)
     .setColorLabel(0)
     ;
   headPosZSlider =  cp5.addSlider("headPosZ")
-    .setPosition(25, 3*25)
+    .setPosition(25, 3*22)
     .setRange(105, 170)
     .setColorLabel(0)
     ;
 
   flowNormalizedSlider = cp5.addSlider("flowNormalized")
-    .setPosition(25, 4*25)
+    .setPosition(25, 4*22)
     .setRange(0.0, 1.0)
     .setColorLabel(0)
     .setLabel("deposition flow rate")
+    ;
+  buildPlateScaleSlider = cp5.addSlider("buildPlateScale")
+    .setPosition(25, 5*22)
+    .setRange(0.4, 1.0)
+    .setColorLabel(0)
+    .setLabel("build plate scale")
     ;
 
   instructionsLabel = cp5.addTextlabel("instructionsLabel")
@@ -149,8 +161,9 @@ void draw() {
   lights();
 
   pushMatrix();
-  
+
   // ------ camera control ------
+  zoom = round(map(buildPlateScale, 1.0, 0.5, 475, 690));  
   translate(width*0.5, height*0.5, zoom);
 
   if (mousePressed && mouseButton==RIGHT) {
@@ -171,15 +184,17 @@ void draw() {
     // execute the smoothing function (slider controller values already updated by osc event handler)
     headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
     headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
-    
+
     // deposit the droplet
     deposit(int(headPosXSmooth), int(headPosYSmooth));
   } else {
     // mouse coords update head position
-    headPosXSlider.setValue(map(mouseX, 0.0, width, 0, buildPlateWidth-1));
-    headPosYSlider.setValue(map(mouseY, 0.0, width, 0, buildPlateHeight-1));
-    
-    // execute the smoothing function (slider controller values already updated by osc event handler)
+    float xMapped = map(mouseX, 0.0, width, 0, buildPlateWidth-1);
+    float yMapped = map(mouseY, 0.0, width, 0, buildPlateHeight-1);
+
+    setHeadPosition(xMapped, yMapped);
+
+    // execute the smoothing function (slider controller values already updated with mouse coords)
     headPosXSmooth += (headPosX-headPosXSmooth)*smoothFactor;
     headPosYSmooth += (headPosY-headPosYSmooth)*smoothFactor;
 
@@ -200,6 +215,12 @@ void draw() {
   popMatrix();
 }
 
+void setHeadPosition(float x, float y) {
+  float bufferScale = (1-buildPlateScale) / 2;
+  headPosXSlider.setValue(x * buildPlateScale + buildPlateWidth * bufferScale); // buildPlate scaling
+  headPosYSlider.setValue(y * buildPlateScale + buildPlateHeight * bufferScale); // buildPlate scaling
+}
+
 void deposit(float x, float y) {
   if (flowNormalized <= 0.0) return; // no flow!
   frameInterval = round(map(flowNormalized, 0.0, 1.0, 40, 22));
@@ -210,7 +231,7 @@ void deposit(float x, float y) {
       int lowResX = round(x); 
       int lowResY = round(y);
       int lowResZ = z;
-      
+
       lowResX = constrain(lowResX, 1, buildPlateWidth - 2);  //-2 because 0-based-index + 1-element-buffer
       lowResY = constrain(lowResY, 1, buildPlateHeight - 2);
 
@@ -227,16 +248,16 @@ void deposit(float x, float y) {
         c[lowResX][lowResY+1][lowResZ-1]
         ) {
         // time to deposit material
-        
-        if(c[lowResX][lowResY][lowResZ]) {
+
+        if (c[lowResX][lowResY][lowResZ]) {
           break; // this column is full to the top. lets bounce out of here without depositing!
         }
-        
+
         // implicit "else"
         c[lowResX][lowResY][lowResZ] = true; // mark presence of deposited material in 3d array
-        
+
         artifact.deposit(lowResX, lowResY, lowResZ); // deposit in the artifact object for rendering
-        
+
         break; // no need to inspect any lower in the column!
       }
     }
@@ -262,7 +283,7 @@ boolean mousingControls() {
 
 void drawFloor() {
   stroke(floorColor);
-  box(buildPlateWidth, buildPlateHeight, 1);
+  box(buildPlateWidth * buildPlateScale, buildPlateHeight * buildPlateScale, 1);
 }
 
 void drawHead() {
@@ -314,8 +335,7 @@ void oscEvent(OscMessage theOscMessage) {
       float yIn = theOscMessage.get(1).floatValue();
       float zIn = theOscMessage.get(2).floatValue();
 
-      headPosXSlider.setValue(xIn);
-      headPosYSlider.setValue(yIn);
+      setHeadPosition(xIn, yIn);
       headPosZSlider.setValue(zIn);
       return;
     }
