@@ -32,6 +32,8 @@ const videoWidth = 600;
 const videoHeight = 500;
 const stats = new Stats();
 
+let frameCountDisplayController = null;
+
 /**
  * Loads a the camera to be used in the demo
  *
@@ -82,7 +84,7 @@ const defaultResNetStride = 32;
 const defaultResNetInputResolution = 250;
 
 const guiState = {
-  algorithm: 'multi-pose',
+  algorithm: 'single-pose',
   input: {
     architecture: 'MobileNetV1',
     outputStride: defaultMobileNetStride,
@@ -106,7 +108,14 @@ const guiState = {
     showPoints: true,
     showBoundingBox: false,
   },
+  clip: {
+    playing: false,
+    recording: false,
+    frameCountDisplay: 0
+  },
   net: null,
+  sequence: [],
+  frameCounter: 0
 };
 
 /**
@@ -122,17 +131,6 @@ function setupGui(cameras, net) {
   const gui = new dat.GUI({width: 300});
 
   let architectureController = null;
-  guiState[tryResNetButtonName] = function() {
-    architectureController.setValue('ResNet50')
-  };
-  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
-  updateTryResNetButtonDatGuiCss();
-
-  // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
-  const algorithmController =
-      gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
@@ -242,18 +240,7 @@ function setupGui(cameras, net) {
   let single = gui.addFolder('Single Pose Detection');
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-
-  let multi = gui.addFolder('Multi Pose Detection');
-  multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
-      .min(1)
-      .max(20)
-      .step(1);
-  multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
-  // nms Radius: controls the minimum distance between poses that are returned
-  // defaults to 20, which is probably fine for most use cases
-  multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
-  multi.open();
+  single.open();
 
   let output = gui.addFolder('Output');
   output.add(guiState.output, 'showVideo');
@@ -263,21 +250,44 @@ function setupGui(cameras, net) {
   output.open();
 
 
-  architectureController.onChange(function(architecture) {
+  let clip = gui.addFolder('Clip');
+  const playingController = clip.add(guiState.clip, 'playing');
+  const recordingController = clip.add(guiState.clip, 'recording');
+  frameCountDisplayController = clip.add(guiState.clip, 'frameCountDisplay');
+  clip.open();
+
+
+  architectureController.onChange(function(architecture) { 
     // if architecture is ResNet50, then show ResNet50 options
     updateGui();
     guiState.changeToArchitecture = architecture;
   });
 
-  algorithmController.onChange(function(value) {
-    switch (guiState.algorithm) {
-      case 'single-pose':
-        multi.close();
-        single.open();
+  recordingController.onChange(function(value) {
+    switch (guiState.clip.recording) {
+      case true:
+        // rec start
+        guiState.sequence = [];
+        guiState.frameCounter = 0;
+        playingController.setValue(false);
         break;
-      case 'multi-pose':
-        single.close();
-        multi.open();
+      case false:
+        guiState.output.frameCounter = 0;
+        // rec stop! make it play!
+        guiState.clip.playing = true;
+        playingController.setValue(true);
+        break;
+    }
+  });
+
+  playingController.onChange(function(value) {
+    switch (guiState.clip.playing) {
+      case true:
+        // play from the start
+        guiState.frameCounter = 0;
+        break;
+      case false:
+        // stop playing
         break;
     }
   });
@@ -390,33 +400,17 @@ function detectPoseInRealTime(video, net) {
     // Begin monitoring code for frames per second
     stats.begin();
 
-    let poses = [];
+
     let minPoseConfidence;
     let minPartConfidence;
-    switch (guiState.algorithm) {
-      case 'single-pose':
-        const pose = await guiState.net.estimatePoses(video, {
-          flipHorizontal: flipPoseHorizontal,
-          decodingMethod: 'single-person'
-        });
-        poses = poses.concat(pose);
-        minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
-        minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
-        break;
-      case 'multi-pose':
-        let all_poses = await guiState.net.estimatePoses(video, {
-          flipHorizontal: flipPoseHorizontal,
-          decodingMethod: 'multi-person',
-          maxDetections: guiState.multiPoseDetection.maxPoseDetections,
-          scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
-          nmsRadius: guiState.multiPoseDetection.nmsRadius
-        });
 
-        poses = poses.concat(all_poses);
-        minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
-        minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
-        break;
-    }
+    const pose = await guiState.net.estimatePoses(video, {
+      flipHorizontal: flipPoseHorizontal,
+      decodingMethod: 'single-person'
+    });
+
+    minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
+    minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
 
     ctx.clearRect(0, 0, videoWidth, videoHeight);
 
@@ -431,14 +425,51 @@ function detectPoseInRealTime(video, net) {
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
-    poses.forEach(({score, keypoints}) => {
-      if (score >= minPoseConfidence) {
+
+
+    const { score, keypoints } = pose[0];
+    
+      if(guiState.clip.recording) {
+        guiState.sequence = guiState.sequence.concat({ score, keypoints });
+
+        guiState.frameCounter++;
+        frameCountDisplayController.setValue(guiState.frameCounter);
+      }
+
+      // set the keypoints array with one firebase setter function!
+      if(guiState.clip.recording == false && guiState.clip.playing) {
+
+        if(guiState.frameCounter >= guiState.sequence.length) {
+          guiState.frameCounter = 0;
+        }
+
+        if(guiState.sequence.length > 0) {
+          let framePose = guiState.sequence[guiState.frameCounter];
+          guiState.frameCounter++;
+          frameCountDisplayController.setValue(guiState.frameCounter);
+
+          if(framePose) {
+            
+            // send recorded frame to firebase //  !  //
+            db.ref("default").set(framePose.keypoints);
+
+            // play recorded frame //  !  //
+            if (guiState.output.showPoints) {
+              drawKeypoints(framePose.keypoints, minPartConfidence, ctx);
+            }
+            if (guiState.output.showSkeleton) {
+              drawSkeleton(framePose.keypoints, minPartConfidence, ctx);
+            }
+            if (guiState.output.showBoundingBox) {
+              drawBoundingBox(framePose.keypoints, ctx);
+            }
+          }
+        }
+      } else {
+        db.ref("default").set(keypoints);
+        // to firebase live // > //
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
-
-          // loop keypoints and send each to a firebase ref!
-          db.ref("default").set(keypoints);
-
         }
         if (guiState.output.showSkeleton) {
           drawSkeleton(keypoints, minPartConfidence, ctx);
@@ -446,8 +477,9 @@ function detectPoseInRealTime(video, net) {
         if (guiState.output.showBoundingBox) {
           drawBoundingBox(keypoints, ctx);
         }
+
       }
-    });
+      
 
     // End monitoring code for frames per second
     stats.end();
