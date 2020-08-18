@@ -28,6 +28,17 @@ var udpPort = new osc.UDPPort({
 });
 udpPort.open();
 
+var wekinatorPort = new osc.UDPPort({
+  localAddress: "0.0.0.0",
+  localPort: 99998,
+  remoteAddress: "0.0.0.0",
+  remotePort: 6448,
+  metadata: true
+});
+wekinatorPort.open();
+
+
+
 rootRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
   
@@ -52,10 +63,47 @@ rootRef.on("value", function(snapshot) {
     ];
   })
 
+  var wekInputs = [];
+
+  // let nosePos = keypoints[0].position;
+  // let rWrist = keypoints[10].position;
+  
+  // let distance = Math.sqrt(Math.pow(nosePos.x - rWrist.x, 2) + Math.pow(nosePos.y - rWrist.y,2));
+
+  // wekInputs = wekInputs.concat(
+  //   {
+  //     type: "f",
+  //     value: distance
+  //   }
+  // );
+
+  // [0,1,2,3,4,5,6].forEach(index => {
+  //   wekInputs = wekInputs.concat(
+  //     {
+  //       type: "f",
+  //       value: keypoints[index].position.x
+  //     }
+  //   );
+  //   wekInputs = wekInputs.concat(
+  //     {
+  //       type: "f",
+  //       value: keypoints[index].position.y
+  //     }
+  //   );
+  // }); // list of 14 floats
+
+  // if(distance !== NaN) {
+  //   wekinatorPort.send({
+  //     address: "/wek/inputs",
+  //     args: wekInputs
+  //   })
+  // }
+
   udpPort.send({
     address: `/lcp/tracking/pose`,
     args: partsArray
   });
+
 });
 
 console.log("\nwelcome to firebase_osc_relay!\n")
