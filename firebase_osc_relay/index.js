@@ -14,9 +14,10 @@ var firebaseConfig = {
     appId: process.env.FIREBASE_APP_ID
   };
 
+  let userId = process.argv.length > 2 ? process.argv[2] : 'default';
   firebase.initializeApp(firebaseConfig);
   var db = firebase.database();
-  var rootRef = db.ref("default"); // TODO: add args on startup to examine a certain user's stream
+  var playbackRef = db.ref(`users/${userId}/playback`);
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -39,7 +40,7 @@ wekinatorPort.open();
 
 
 
-rootRef.on("value", function(snapshot) {
+playbackRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
   
   var partsArray = keypoints.map(part => {
