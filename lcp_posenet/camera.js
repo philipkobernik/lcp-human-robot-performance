@@ -110,12 +110,24 @@ const guiState = {
   },
   clip: {
     playing: false,
+    userId: "default",
     recording: false,
-    frameCountDisplay: 0
+    frameCountDisplay: 0,
+    recordFrames: false,
+    saveName: "living-room",
+    loadName: "somewhere",
+    loadFrames: false,
+    listTapes: false
+  },
+  saved: {
+    list: {
+      0: 'zero'
+    }
   },
   net: null,
   sequence: [],
-  frameCounter: 0
+  frameCounter: 0,
+  userId: "default"
 };
 
 /**
@@ -131,6 +143,7 @@ function setupGui(cameras, net) {
   const gui = new dat.GUI({width: 300});
 
   let architectureController = null;
+  let userIdController = null;
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
@@ -254,7 +267,18 @@ function setupGui(cameras, net) {
   const playingController = clip.add(guiState.clip, 'playing');
   const recordingController = clip.add(guiState.clip, 'recording');
   frameCountDisplayController = clip.add(guiState.clip, 'frameCountDisplay');
+  userIdController = clip.add(guiState.clip, "userId");
+  const saveNameController = clip.add(guiState.clip, "saveName");
+  const recordFramesController = clip.add(guiState.clip, "recordFrames");
+
+  const loadNameController = clip.add(guiState.clip, "loadName");
+  const loadFramesController = clip.add(guiState.clip, "loadFrames");
+  const listTapesController = clip.add(guiState.clip, "listTapes");
+
+
   clip.open();
+
+  let savedSequence = gui.addFolder('Saved');
 
 
   architectureController.onChange(function(architecture) { 
@@ -285,12 +309,62 @@ function setupGui(cameras, net) {
       case true:
         // play from the start
         guiState.frameCounter = 0;
-        break;
+        break
       case false:
         // stop playing
         break;
     }
   });
+
+  recordFramesController.onChange(function(value) {
+    let now = new Date();
+    let dateString = `${now.getFullYear()}_${now.getMonth()+1}_${now.getDate()}_${now.getHours()}_${now.getMinutes()}`;
+    let timeStampedRef = db.ref(`users/${guiState.clip.userId}/saved`);///${dateString}`);
+    timeStampedRef.push({
+      date: dateString,
+      name: guiState.clip.saveName,
+      sequence: guiState.sequence,
+      length: guiState.sequence.length
+    });
+    // recordFramesController.setValue(false);
+  });
+
+  saveNameController.onFinishChange(function(value) {
+    guiState.saveName = value;
+  })
+
+  loadFramesController.onChange(function(value) {
+    db.ref(`users/${guiState.clip.userId}/saved/`)
+      .orderByChild('name')
+      .equalTo(guiState.clip.loadName)
+      .on('child_added', function(snapshot) {
+        let tape = snapshot.val();
+        guiState.sequence = tape.sequence;
+        console.log(`loaded ${tape.name} by ${tape.userId}`);
+        guiState.frameCounter = 0;
+        playingController.setValue(true);
+        recordingController.setValue(false);
+      });
+  });
+
+  loadNameController.onFinishChange(function(value) {
+    guiState.seqName = value;
+  })
+
+  listTapesController.onChange((value) => {
+
+    var savedRef = db.ref('users/' + guiState.clip.userId + '/saved');
+    savedRef.on('child_added', function (snapshot) {
+      var childKey = snapshot.key;
+      var childData = snapshot.val();
+      let name = childData.name;
+      guiState.saved.list[name] = false;
+      const controller = savedSequence.add(guiState.saved.list, name);
+    });
+    savedSequence.open();
+    
+  })
+
 }
 
 /**
@@ -451,7 +525,7 @@ function detectPoseInRealTime(video, net) {
           if(framePose) {
             
             // send recorded frame to firebase //  !  //
-            db.ref("default").set(framePose.keypoints);
+            db.ref("users/" + guiState.clip.userId + "/playback").set(framePose.keypoints);
 
             // play recorded frame //  !  //
             if (guiState.output.showPoints) {
@@ -466,7 +540,7 @@ function detectPoseInRealTime(video, net) {
           }
         }
       } else {
-        db.ref("default").set(keypoints);
+        db.ref("users/" + guiState.clip.userId + "/playback").set(keypoints);
         // to firebase live // > //
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
