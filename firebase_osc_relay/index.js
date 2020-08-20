@@ -16,7 +16,7 @@ var firebaseConfig = {
 
   let userId = process.argv.length > 2 ? process.argv[2] : 'default';
   firebase.initializeApp(firebaseConfig);
-  var db = firebase.database();
+  var db = firebase.database(); 
   var playbackRef = db.ref(`users/${userId}/playback`);
 
 // config and open udp port
@@ -38,10 +38,13 @@ var wekinatorPort = new osc.UDPPort({
 });
 wekinatorPort.open();
 
-
-
 playbackRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
+  if(!keypoints) {
+    console.error(`Error: there is no user ${userId} on firebase`);
+    console.error("Perhaps you need to open the posenet tracker to initialize the user");
+    return false;
+  };
   
   var partsArray = keypoints.map(part => {
     return [
