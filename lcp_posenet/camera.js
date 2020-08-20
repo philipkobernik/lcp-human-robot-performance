@@ -34,6 +34,23 @@ const stats = new Stats();
 
 let frameCountDisplayController = null;
 
+Date.prototype.toIsoString = function() {
+    var tzo = -this.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function(num) {
+            var norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+        };
+    return this.getFullYear() +
+        '-' + pad(this.getMonth() + 1) +
+        '-' + pad(this.getDate()) +
+        'T' + pad(this.getHours()) +
+        ':' + pad(this.getMinutes()) +
+        ':' + pad(this.getSeconds()) +
+        dif + pad(tzo / 60) +
+        ':' + pad(tzo % 60);
+}
+
 /**
  * Loads a the camera to be used in the demo
  *
@@ -108,16 +125,15 @@ const guiState = {
     showPoints: true,
     showBoundingBox: false,
   },
-  clip: {
+  user: {
+    id: "",
+  },
+  tapeDeck: {
     playing: false,
-    userId: "default",
     recording: false,
     frameCountDisplay: 0,
-    recordFrames: false,
-    saveName: "living-room",
-    loadName: "somewhere",
-    loadFrames: false,
-    listTapes: false
+    storeTape: false,
+    newTapeName: "",
   },
   saved: {
     list: {
@@ -126,8 +142,7 @@ const guiState = {
   },
   net: null,
   sequence: [],
-  frameCounter: 0,
-  userId: "default"
+  frameCounter: 0
 };
 
 /**
@@ -141,6 +156,12 @@ function setupGui(cameras, net) {
   }
 
   const gui = new dat.GUI({width: 300});
+
+  let tapesFolder = null; // using tapesFolder as a sort-of global state for this gui lib
+  // its pretty gross, but its working
+  // when I list tapes, I blow away this "folder" and re-create it, so need to keep a reference
+
+  let userTapesRef = null;
 
   let architectureController = null;
   let userIdController = null;
@@ -262,24 +283,18 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showBoundingBox');
   output.open();
 
+  let userFolder = gui.addFolder('User');
+  userIdController = userFolder.add(guiState.user, "id");
+  userFolder.open();
 
-  let clip = gui.addFolder('Clip');
-  const playingController = clip.add(guiState.clip, 'playing');
-  const recordingController = clip.add(guiState.clip, 'recording');
-  frameCountDisplayController = clip.add(guiState.clip, 'frameCountDisplay');
-  userIdController = clip.add(guiState.clip, "userId");
-  const saveNameController = clip.add(guiState.clip, "saveName");
-  const recordFramesController = clip.add(guiState.clip, "recordFrames");
+  let tapeDeck = gui.addFolder('Tape Deck');
+  const playingController = tapeDeck.add(guiState.tapeDeck, 'playing');
+  const recordingController = tapeDeck.add(guiState.tapeDeck, 'recording');
+  frameCountDisplayController = tapeDeck.add(guiState.tapeDeck, 'frameCountDisplay');
+  const newTapeNameController = tapeDeck.add(guiState.tapeDeck, "newTapeName");
+  const storeTapeController = tapeDeck.add(guiState.tapeDeck, "storeTape");
 
-  const loadNameController = clip.add(guiState.clip, "loadName");
-  const loadFramesController = clip.add(guiState.clip, "loadFrames");
-  const listTapesController = clip.add(guiState.clip, "listTapes");
-
-
-  clip.open();
-
-  let savedSequence = gui.addFolder('Saved');
-
+  tapeDeck.open();
 
   architectureController.onChange(function(architecture) { 
     // if architecture is ResNet50, then show ResNet50 options
@@ -288,7 +303,7 @@ function setupGui(cameras, net) {
   });
 
   recordingController.onChange(function(value) {
-    switch (guiState.clip.recording) {
+    switch (guiState.tapeDeck.recording) {
       case true:
         // rec start
         guiState.sequence = [];
@@ -298,14 +313,14 @@ function setupGui(cameras, net) {
       case false:
         guiState.output.frameCounter = 0;
         // rec stop! make it play!
-        guiState.clip.playing = true;
+        guiState.tapeDeck.playing = true;
         playingController.setValue(true);
         break;
     }
   });
 
   playingController.onChange(function(value) {
-    switch (guiState.clip.playing) {
+    switch (guiState.tapeDeck.playing) {
       case true:
         // play from the start
         guiState.frameCounter = 0;
@@ -316,55 +331,119 @@ function setupGui(cameras, net) {
     }
   });
 
-  recordFramesController.onChange(function(value) {
-    let now = new Date();
-    let dateString = `${now.getFullYear()}_${now.getMonth()+1}_${now.getDate()}_${now.getHours()}_${now.getMinutes()}`;
-    let timeStampedRef = db.ref(`users/${guiState.clip.userId}/saved`);///${dateString}`);
-    timeStampedRef.push({
-      date: dateString,
-      name: guiState.clip.saveName,
-      sequence: guiState.sequence,
-      length: guiState.sequence.length
-    });
-    // recordFramesController.setValue(false);
-  });
-
-  saveNameController.onFinishChange(function(value) {
-    guiState.saveName = value;
-  })
-
-  loadFramesController.onChange(function(value) {
-    db.ref(`users/${guiState.clip.userId}/saved/`)
-      .orderByChild('name')
-      .equalTo(guiState.clip.loadName)
-      .on('child_added', function(snapshot) {
-        let tape = snapshot.val();
-        guiState.sequence = tape.sequence;
-        console.log(`loaded ${tape.name} by ${tape.userId}`);
-        guiState.frameCounter = 0;
-        playingController.setValue(true);
-        recordingController.setValue(false);
-      });
-  });
-
-  loadNameController.onFinishChange(function(value) {
-    guiState.seqName = value;
-  })
-
-  listTapesController.onChange((value) => {
-
-    var savedRef = db.ref('users/' + guiState.clip.userId + '/saved');
-    savedRef.on('child_added', function (snapshot) {
-      var childKey = snapshot.key;
-      var childData = snapshot.val();
-      let name = childData.name;
-      guiState.saved.list[name] = false;
-      const controller = savedSequence.add(guiState.saved.list, name);
-    });
-    savedSequence.open();
+  storeTapeController.onChange(function(value) {
+    if (guiState.user.id === "" || guiState.tapeDeck.newTapeName === "") return false;
     
+
+    let blocked = false;
+    let promises = [];
+
+    var tapesRef = db.ref('users/' + guiState.userId + '/tapes');
+    tapesRef
+      .once('value')
+      .then(function (snapshot) {
+        snapshot.forEach(childSnapshot => {
+          var childKey = childSnapshot.key;
+
+          promises.push(db.ref(`saved/${childKey}`)
+            .once('value')
+            .then(function (snapshot) {
+              let tape = snapshot.val();
+              if (guiState.tapeDeck.newTapeName === tape.name) {
+                // sameName
+                blocked = true;
+              }
+
+            })
+          )
+        }); // end forEach
+        return Promise.all(promises);
+    })
+    .then(snapshot => {
+      console.log('blocked is', blocked)
+      if (!blocked) {
+        var newTapeRef = db.ref("saved").push();
+        newTapeRef.set({
+          created_at: new Date().toIsoString(),
+          user: guiState.user.id,
+          name: guiState.tapeDeck.newTapeName,
+          sequence: guiState.sequence,
+          length: guiState.sequence.length
+        });
+        db.ref(`users/${guiState.user.id}/tapes/${newTapeRef.key}`).set(true);
+        console.log("setting to false", storeTapeController.domElement.children[-2]);
+        storeTapeController.domElement.children[0].checked = false;
+        console.log('stored');
+        return true;
+      } else {
+        console.log("blocked!");
+        return true;
+      }
+    });
+
+  });
+
+  newTapeNameController.onFinishChange(function(value) {
+    guiState.newTapeName = value;
   })
 
+  userIdController.onFinishChange((value) => {
+    guiState.userId = value;
+
+    if(userTapesRef) userTapesRef.off(); // remove user tapes listeners
+
+    // blow away dat.gui list
+    try {
+      tapesFolder = gui.addFolder('Tapes');
+    }
+    catch (err) {
+      gui.removeFolder(tapesFolder);
+      tapesFolder = gui.addFolder('Tapes');
+    }
+
+    // rebind listeners to new ref
+    setupUserTapesListeners(userTapesRef, tapesFolder, playingController);
+
+    // open the folder
+    tapesFolder.open();
+    
+  });
+
+  // setupUserTapesListeners(userTapesRef, tapesFolder);
+  // enable this if we add a default channel/user
+
+}
+
+function setupUserTapesListeners(ref, tapesFolder, playingController) {
+  ref = db.ref(`users/${guiState.userId}/tapes`);
+
+  ref.on('child_added', added => {
+    var childKey = added.key;
+    db.ref(`saved/${childKey}`)
+      .once('value', function (snapshot) {
+        let tape = snapshot.val();
+        let name = `${tape.name}_${tape.length}`;
+        guiState.saved.list[name] = false;
+        const controller = tapesFolder.add(guiState.saved.list, name);
+
+        let handler = (ctr, event) => {
+          console.log(tape.name);
+          guiState.sequence = tape.sequence;
+          playingController.setValue(true);
+          playingController.updateDisplay();
+          // tries to uncheck the checkbox -- not sure why this doesn't work 
+          controller.domElement.children[0].checked = false;
+          return false;
+        };
+
+        controller.onChange(handler.bind(tape))
+      })
+      
+  });
+
+  ref.on('child_removed', snapshot => {
+    console.log('removed');
+  });
 }
 
 /**
@@ -503,7 +582,7 @@ function detectPoseInRealTime(video, net) {
 
     const { score, keypoints } = pose[0];
     
-      if(guiState.clip.recording) {
+      if(guiState.tapeDeck.recording) {
         guiState.sequence = guiState.sequence.concat({ score, keypoints });
 
         guiState.frameCounter++;
@@ -511,7 +590,7 @@ function detectPoseInRealTime(video, net) {
       }
 
       // set the keypoints array with one firebase setter function!
-      if(guiState.clip.recording == false && guiState.clip.playing) {
+      if(guiState.tapeDeck.recording == false && guiState.tapeDeck.playing) {
 
         if(guiState.frameCounter >= guiState.sequence.length) {
           guiState.frameCounter = 0;
@@ -525,7 +604,7 @@ function detectPoseInRealTime(video, net) {
           if(framePose) {
             
             // send recorded frame to firebase //  !  //
-            db.ref("users/" + guiState.clip.userId + "/playback").set(framePose.keypoints);
+            db.ref("users/" + guiState.userId + "/playback").set(framePose.keypoints);
 
             // play recorded frame //  !  //
             if (guiState.output.showPoints) {
@@ -540,7 +619,7 @@ function detectPoseInRealTime(video, net) {
           }
         }
       } else {
-        db.ref("users/" + guiState.clip.userId + "/playback").set(keypoints);
+        db.ref("users/" + guiState.userId + "/playback").set(keypoints);
         // to firebase live // > //
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
