@@ -27,7 +27,8 @@ Generators, calibration routines should live in here.
 1. start firebase_osc_relay:
     * press command-key + spacebar, type in `terminal`, press enter
     * input `cd ~/lcp-human-robot-performance/firebase_osc_relay/` and press enter
-    * input `npm run start` and press enter
+    * input `npm run start [userId]` and press enter
+        * for example, brooke would input `npm run start brooke`
     * terminal should say
         * `relaying pose data from firebase to localhost:10419 ...`
 
@@ -51,9 +52,10 @@ Generators, calibration routines should live in here.
 
 4. start the posenet tracker
     * open [posenet camera tracker](https://lcp-posenet.surge.sh/camera.html)
-      * algorithm: `single-pose`
-      * architecture: `MobileNetv1`
-      * input resolution: `250` or `300`
+        * architecture: `MobileNetv1`
+            * use `ResNet50` if you have a newer computer or discrete GPU
+        * input resolution: `250` or `300`
+        * make sure to intialize the tracker with your `userId`. This can be your first name or a codename. When you save sequences, they will be saved under this `userId`.
 
 
 ## instructions for getting updates to the codebase
