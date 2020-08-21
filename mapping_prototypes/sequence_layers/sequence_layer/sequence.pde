@@ -1,11 +1,14 @@
 class Sequence {
   // attributes
   ArrayList<HashMap<String, PVector>> poses;
-  int nbOfLoops = 0; // should it be defined at the start or defined by the end of the recording?
+  int nbOfLoops = 10; // should it be defined at the start or defined by the end of the recording?
+  int currentLoop = 0;
   int replayIndex = 0;
+  boolean _isRecording = true;
 
   // functions
   Sequence() {
+    poses = new ArrayList<HashMap<String, PVector>>();
   }
 
   // display as it's being recorded
@@ -35,5 +38,20 @@ class Sequence {
 
   void incrementIndex() {
     replayIndex++;
+    if(replayIndex == poses.size()) {
+      currentLoop++;
+      replayIndex = 0;
+    }
+    println(currentLoop);
+  }
+  
+  boolean isDone() {
+    return (replayIndex == poses.size()-1 && currentLoop == nbOfLoops);
+  }
+  boolean isRecording() {
+    return _isRecording;
+  }
+  void stopRecording() {
+    _isRecording = false;
   }
 }

@@ -15,6 +15,8 @@ int buildPlateWidthHalf = buildPlateWidth/2;
 int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
+
+
 // ------ other ------
 boolean inFlash, outFlash = false;
 String troubleshootingText = "If not receiving OSC: \n"
@@ -25,8 +27,14 @@ String troubleshootingText = "If not receiving OSC: \n"
 HashMap<String, PVector> keypoints = new HashMap<String, PVector>();
 ArrayList<Sequence> sequences = new ArrayList<Sequence>();
 
+boolean recording = false;
+
+int currentPlaybackSequence = 0;
+int currentPlaybackLoop;
+
 void setup() {
   size(600, 500);
+  frameRate(20);
   cp5 = new ControlP5(this);
 
   /* start oscP5, listening for incoming messages at port 10419 */
@@ -65,26 +73,46 @@ void setup() {
 
 
 void draw() {
+  // STATE in the prototype:
+  // 1. stack of sequences, (array of Sequence instances)
+  //    -- each has number of loops (layers)
+  // 2. current sequence
+  // 3. current loop
+
   fill(0, 0, 0, 255);
   noStroke();
   rect(0, 0, width, height);
 
+  // FOR RECORDING
 
-  if (inFlash) {
-    oscInLabel.setStringValue("OSC input: [*]");
-    inFlash = false;
-  } else {
-    oscInLabel.setStringValue("OSC input: [ ]");
+
+
+  // FOR PLAYBACK
+  if (sequences.size() > currentPlaybackSequence && !getPlaybackSeq().isRecording()) {
+    // -- ask current seq if its done?
+    if (getPlaybackSeq().isDone()) {
+      // advance to next sequence
+      currentPlaybackSequence++;
+      //currentPlaybackSequence = (currentPlaybackSequence + 1) % sequences.size(); // loop around here
+      
+    } else {
+      getPlaybackSeq().incrementIndex();
+      getPlaybackSeq().display();
+    }
+
+    println(currentPlaybackSequence);
+    //getPlaybackSeq().display();
+    // -- if not, advance current seq frame
+    // -- render frame pose
   }
 
-  if (outFlash) {
-    oscOutLabel.setStringValue("OSC output: [*]");
-    outFlash = false;
-  } else {
-    oscOutLabel.setStringValue("OSC output: [ ]");
-  }
-  
+
+  updateFlashingDots();
   //drawKeypoints();
+}
+
+Sequence getPlaybackSeq() {
+  return sequences.get(currentPlaybackSequence);
 }
 
 void drawKeypoints() {
@@ -99,6 +127,22 @@ void drawKeypoints() {
 
       ellipse(point.x, point.y, random(6)+13, random(6)+13);
     }
+  }
+}
+
+void updateFlashingDots() {
+  if (inFlash) {
+    oscInLabel.setStringValue("OSC input: [*]");
+    inFlash = false;
+  } else {
+    oscInLabel.setStringValue("OSC input: [ ]");
+  }
+
+  if (outFlash) {
+    oscOutLabel.setStringValue("OSC output: [*]");
+    outFlash = false;
+  } else {
+    oscOutLabel.setStringValue("OSC output: [ ]");
   }
 }
 
@@ -125,10 +169,16 @@ void oscEvent(OscMessage theOscMessage) {
       keypoints.put(part, new PVector(x, y, score)); // score is stored as third component of the PVector
     }
 
+    if (recording) {
+      sequences.get(sequences.size()-1).addPose(
+        new HashMap<String, PVector>(keypoints)
+      );
+    }
+
     // now send some OSC messages to the LCP
     PVector nose = keypoints.get("nose");
-    
-    if(partCount > 0) {
+
+    if (partCount > 0) {
       PVector centroid = new PVector(sumX/partCount, sumY/partCount);
       messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
     } else {
@@ -157,4 +207,26 @@ void messagePrinter(float x, float y, boolean flowActive) {
     flow.add(0.0);
   }
   oscP5.send(flow, simulatorIAC);
+}
+
+void toggleRecording() {
+  recording = !recording;
+
+  if (recording) {
+    sequences.add(new Sequence());
+    //
+    println("recording true!");
+    println(sequences.size());
+
+  } else {
+    // end the sequence, maybe calculate number loops or something
+    //
+    sequences.get(sequences.size()-1).stopRecording();
+    println("recording end");
+  }
+  
+}
+
+void keyReleased() {
+  if (key == 'r' || key == 'R') toggleRecording();
 }
