@@ -16,7 +16,6 @@ int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
 
-
 // ------ other ------
 boolean inFlash, outFlash = false;
 String troubleshootingText = "If not receiving OSC: \n"
@@ -78,14 +77,9 @@ void draw() {
   //    -- each has number of loops (layers)
   // 2. current sequence
   // 3. current loop
-
   fill(0, 0, 0, 255);
   noStroke();
   rect(0, 0, width, height);
-
-  // FOR RECORDING
-
-
 
   // FOR PLAYBACK
   if (sequences.size() > currentPlaybackSequence && !getPlaybackSeq().isRecording()) {
