@@ -88,13 +88,11 @@ void draw() {
       // advance to next sequence
       currentPlaybackSequence++;
       //currentPlaybackSequence = (currentPlaybackSequence + 1) % sequences.size(); // loop around here
-      
     } else {
       getPlaybackSeq().incrementIndex();
       getPlaybackSeq().display();
     }
 
-    println(currentPlaybackSequence);
     //getPlaybackSeq().display();
     // -- if not, advance current seq frame
     // -- render frame pose
@@ -163,21 +161,25 @@ void oscEvent(OscMessage theOscMessage) {
       keypoints.put(part, new PVector(x, y, score)); // score is stored as third component of the PVector
     }
 
-    if (recording) {
-      sequences.get(sequences.size()-1).addPose(
-        new HashMap<String, PVector>(keypoints)
-      );
-    }
+    PVector centroid = new PVector(sumX/partCount, sumY/partCount);
+
 
     // now send some OSC messages to the LCP
-    PVector nose = keypoints.get("nose");
-
     if (partCount > 0) {
-      PVector centroid = new PVector(sumX/partCount, sumY/partCount);
-      messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
+      //PVector centroid = new PVector(sumX/partCount, sumY/partCount);
+
+      //messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
     } else {
       // no parts are visible -- dancer is offscreen or not detected!
-      messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
+      //messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
+    }
+
+    // add pose and centroid to the sequence 
+    if (recording) {
+      sequences.get(sequences.size()-1).addPose(
+        new HashMap<String, PVector>(keypoints), 
+        centroid
+        );
     }
   }
 }
@@ -192,7 +194,7 @@ void messagePrinter(float x, float y, boolean flowActive) {
   position.add(xOut);
   position.add(yOut);
   position.add(105.0);
-  oscP5.send(position, simulatorIAC); 
+  oscP5.send(position, simulatorIAC);
 
   OscMessage flow = new OscMessage("/lcp/control/flow");
   if (flowActive) {
@@ -203,22 +205,41 @@ void messagePrinter(float x, float y, boolean flowActive) {
   oscP5.send(flow, simulatorIAC);
 }
 
+void sendSequenceToPrinter(ArrayList<PVector> centroids, int nbLayers) {
+  
+  OscMessage positions = new OscMessage("/lcp/control/positions");
+  for (PVector centroid : centroids) {
+    float cX = map(centroid.x, 0, 600, 0, buildPlateWidth-1);
+    float cY = map(centroid.y, 0, 500, 0, buildPlateHeight-1);
+    
+    positions.add(cX);
+    positions.add(cY);
+    positions.add(105.0);
+  }
+  positions.add(nbLayers);
+  oscP5.send(positions, simulatorIAC);
+
+  OscMessage layers = new OscMessage("/lcp/control/layers");
+  layers.add(nbLayers);
+  oscP5.send(layers, simulatorIAC);
+}
+
 void toggleRecording() {
   recording = !recording;
 
   if (recording) {
     sequences.add(new Sequence());
     //
-    println("recording true!");
-    println(sequences.size());
-
   } else {
     // end the sequence, maybe calculate number loops or something
     //
     sequences.get(sequences.size()-1).stopRecording();
     println("recording end");
+    // send OSC
+    // - centroids array
+    // - number of loops
+    sendSequenceToPrinter(sequences.get(sequences.size()-1).centroids, sequences.get(sequences.size()-1).nbOfLoops);
   }
-  
 }
 
 void keyReleased() {

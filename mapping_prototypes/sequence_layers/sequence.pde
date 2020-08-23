@@ -1,6 +1,7 @@
 class Sequence {
   // attributes
   ArrayList<HashMap<String, PVector>> poses;
+  ArrayList<PVector> centroids;
   int nbOfLoops = 10; // should it be defined at the start or defined by the end of the recording?
   int currentLoop = 0;
   int replayIndex = 0;
@@ -9,6 +10,7 @@ class Sequence {
   // functions
   Sequence() {
     poses = new ArrayList<HashMap<String, PVector>>();
+    centroids = new ArrayList<PVector>();
   }
 
   // display as it's being recorded
@@ -28,13 +30,13 @@ class Sequence {
         //fill(random(128)+64, random(128)+64, random(128)+64);
         fill(r, g, b);
         ellipse(point.x, point.y, random(6)+13, random(6)+13);
-        //println(poses.get(replayIndex).get("leftShoulder"));
       }
     }
   }
 
-  void addPose(HashMap<String, PVector> pose) {
+  void addPose(HashMap<String, PVector> pose, PVector centroid) {
     poses.add(pose);
+    centroids.add(centroid);
   }
 
   void setNumberofLoops(int nbLoops) {
@@ -47,7 +49,6 @@ class Sequence {
       currentLoop++;
       replayIndex = 0;
     }
-    println(currentLoop);
   }
 
   boolean isDone() {
