@@ -296,7 +296,7 @@ function setupGui(cameras, net) {
 
   tapeDeck.open();
 
-  architectureController.onChange(function(architecture) { 
+  architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     updateGui();
     guiState.changeToArchitecture = architecture;
@@ -333,7 +333,7 @@ function setupGui(cameras, net) {
 
   storeTapeController.onChange(function(value) {
     if (guiState.user.id === "" || guiState.tapeDeck.newTapeName === "") return false;
-    
+
 
     let blocked = false;
     let promises = [];
@@ -406,7 +406,7 @@ function setupGui(cameras, net) {
 
     // open the folder
     tapesFolder.open();
-    
+
   });
 
   // setupUserTapesListeners(userTapesRef, tapesFolder);
@@ -431,14 +431,14 @@ function setupUserTapesListeners(ref, tapesFolder, playingController) {
           guiState.sequence = tape.sequence;
           playingController.setValue(true);
           playingController.updateDisplay();
-          // tries to uncheck the checkbox -- not sure why this doesn't work 
+          // tries to uncheck the checkbox -- not sure why this doesn't work
           controller.domElement.children[0].checked = false;
           return false;
         };
 
         controller.onChange(handler.bind(tape))
       })
-      
+
   });
 
   ref.on('child_removed', snapshot => {
@@ -581,7 +581,7 @@ function detectPoseInRealTime(video, net) {
 
 
     const { score, keypoints } = pose[0];
-    
+
       if(guiState.tapeDeck.recording) {
         guiState.sequence = guiState.sequence.concat({ score, keypoints });
 
@@ -602,7 +602,7 @@ function detectPoseInRealTime(video, net) {
           frameCountDisplayController.setValue(guiState.frameCounter);
 
           if(framePose) {
-            
+
             // send recorded frame to firebase //  !  //
             db.ref("users/" + guiState.userId + "/playback").set(framePose.keypoints);
 
@@ -632,7 +632,7 @@ function detectPoseInRealTime(video, net) {
         }
 
       }
-      
+
 
     // End monitoring code for frames per second
     stats.end();
