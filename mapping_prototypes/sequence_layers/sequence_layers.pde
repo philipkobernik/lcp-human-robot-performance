@@ -2,12 +2,18 @@ import java.util.Map;
 import oscP5.*;
 import netP5.*;
 import controlP5.*;
+import ddf.minim.*;
+import ddf.minim.analysis.*;
+
+Minim minim;
+AudioInput in;
+BeatDetect beat;
 
 OscP5 oscP5;
 NetAddress simulatorIAC;
 ControlP5 cp5;
 
-Controller oscInLabel, oscOutLabel, troubleshootingLabel;
+controlP5.Controller oscInLabel, oscOutLabel, troubleshootingLabel;
 
 // ------ build plate ------
 int buildPlateWidth = 340;
@@ -68,19 +74,19 @@ void setup() {
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
+    
+  minim = new Minim(this);
+  in = minim.getLineIn();
+  beat = new BeatDetect();
+  beat.setSensitivity(1000); // 1sec buffer after beat is detected
 }
 
 void draw() {
-  // STATE in the prototype:
-  // 1. stack of sequences, (array of Sequence instances)
-  //    -- each has number of loops (layers)
-  // 2. current sequence
-  // 3. current loop
-
   // keep traces alive
   drawTraces();
 
-  fill(0, 0, 0, 255);
+  int red = recording ? 200 : 0;
+  fill(red, 0, 0, 255);
   noStroke();
   rect(0, 0, width, height);
 
@@ -103,6 +109,11 @@ void draw() {
 
   updateFlashingDots();
   drawKeypoints();
+  
+  beat.detect(in.mix);
+  if(beat.isOnset()) {
+    toggleRecording();
+  }
 }
 
 Sequence getPlaybackSeq() {
