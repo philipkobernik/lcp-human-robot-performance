@@ -6,11 +6,13 @@ class Sequence {
   int currentLoop = 0;
   int replayIndex = 0;
   boolean _isRecording = true;
+  Trace trace;
 
   // functions
   Sequence() {
     poses = new ArrayList<HashMap<String, PVector>>();
     centroids = new ArrayList<PVector>();
+    trace = new Trace();
   }
 
   // display as it's being recorded
@@ -23,20 +25,32 @@ class Sequence {
     noStroke();
     for (PVector point : poses.get(replayIndex).values()) {
       if (point.z > 0.5) {
-        float r = map(point.x, 0, 600, 64, 255);
-        float g = map(point.y, 0, 500, 64, 255);
+        float r = map(point.x, 0, 600, 64, 127);
+        float g = map(point.y, 0, 500, 64, 127);
         float b = 100;
 
         //fill(random(128)+64, random(128)+64, random(128)+64);
-        fill(r, g, b);
-        ellipse(point.x, point.y, random(6)+13, random(6)+13);
+        fill(r+g, b);
+        ellipse(point.x, point.y, 10, 10);
       }
+    }
+    
+    // display traces underneath
+    drawTraces();
+    // trace of current loop
+    trace.display(replayIndex, false);
+  }
+  
+  void drawTraces(){
+    for (int i = 0; i < currentLoop; i++){
+      trace.display(centroids.size(), true);
     }
   }
 
   void addPose(HashMap<String, PVector> pose, PVector centroid) {
     poses.add(pose);
     centroids.add(centroid);
+    trace.addPoint(centroid);
   }
 
   void setNumberofLoops(int nbLoops) {
@@ -54,6 +68,7 @@ class Sequence {
   boolean isDone() {
     return (replayIndex == poses.size()-1 && currentLoop == nbOfLoops);
   }
+  
   boolean isRecording() {
     return _isRecording;
   }
@@ -62,7 +77,8 @@ class Sequence {
   }
 
   void drawConnections() {
-    stroke(200);
+    stroke(200,100);
+    strokeWeight(2);
     PVector lShoulder = poses.get(replayIndex).get("leftShoulder");
     PVector rShoulder = poses.get(replayIndex).get("rightShoulder");
     drawLine(lShoulder, rShoulder);

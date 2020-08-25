@@ -32,7 +32,7 @@ int currentPlaybackSequence = 0;
 int currentPlaybackLoop;
 
 void setup() {
-  size(600, 500);
+  size(600, 500, P3D);
   frameRate(20);
   cp5 = new ControlP5(this);
 
@@ -70,13 +70,16 @@ void setup() {
     ;
 }
 
-
 void draw() {
   // STATE in the prototype:
   // 1. stack of sequences, (array of Sequence instances)
   //    -- each has number of loops (layers)
   // 2. current sequence
   // 3. current loop
+
+  // keep traces alive
+  drawTraces();
+
   fill(0, 0, 0, 255);
   noStroke();
   rect(0, 0, width, height);
@@ -98,13 +101,18 @@ void draw() {
     // -- render frame pose
   }
 
-
   updateFlashingDots();
-  //drawKeypoints();
+  drawKeypoints();
 }
 
 Sequence getPlaybackSeq() {
   return sequences.get(currentPlaybackSequence);
+}
+
+void drawTraces() {
+  for (int i = 0; i < currentPlaybackSequence; i++) {
+    sequences.get(i).drawTraces();
+  }
 }
 
 void drawKeypoints() {
@@ -116,7 +124,7 @@ void drawKeypoints() {
 
       //fill(random(128)+64, random(128)+64, random(128)+64);
       fill(r, g, b);
-
+      noStroke();
       ellipse(point.x, point.y, random(6)+13, random(6)+13);
     }
   }
@@ -206,12 +214,12 @@ void messagePrinter(float x, float y, boolean flowActive) {
 }
 
 void sendSequenceToPrinter(ArrayList<PVector> centroids, int nbLayers) {
-  
+
   OscMessage positions = new OscMessage("/lcp/control/positions");
   for (PVector centroid : centroids) {
     float cX = map(centroid.x, 0, 600, 0, buildPlateWidth-1);
     float cY = map(centroid.y, 0, 500, 0, buildPlateHeight-1);
-    
+
     positions.add(cX);
     positions.add(cY);
     positions.add(105.0);
