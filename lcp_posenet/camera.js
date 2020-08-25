@@ -142,7 +142,8 @@ const guiState = {
   },
   net: null,
   sequence: [],
-  frameCounter: 0
+  frameCounter: 0,
+  userId: 'default'
 };
 
 /**
