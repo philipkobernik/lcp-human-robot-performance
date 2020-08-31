@@ -11,10 +11,15 @@ Table table;
 Controller oscInLabel, oscOutLabel, troubleshootingLabel;
 
 // ------ build plate ------
-int buildPlateWidth = 340;
+int buildPlateWidth = 465;
 int buildPlateWidthHalf = buildPlateWidth/2;
-int buildPlateHeight = 280;
+int buildPlateHeight = 365;
 int buildPlateHeightHalf = buildPlateHeight/2;
+
+int inputWidth = 1920;
+int inputWidthHalf = inputWidth/2;
+int inputHeight = 1080;
+int inputHeightHalf = inputHeight/2;
 
 // ------ other ------
 boolean inFlash, outFlash = false;
@@ -25,9 +30,11 @@ String troubleshootingText = "If not receiving OSC: \n"
 // Note the HashMap's "key" is a String and "value" is an Integer
 HashMap<String, PVector> keypoints = new HashMap<String, PVector>();
 
+PVector centroid, centroidOld;
+
 
 void setup() {
-  size(600, 500);
+  size(960, 540);
   cp5 = new ControlP5(this);
 
   /* start oscP5, listening for incoming messages at port 10419 */
@@ -62,11 +69,13 @@ void setup() {
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
-    
+
   table = new Table();
   table.addColumn("timeId");
   table.addColumn("x");
   table.addColumn("y");
+
+  centroid = new PVector(0, 0);
 }
 
 
@@ -89,21 +98,25 @@ void draw() {
   } else {
     oscOutLabel.setStringValue("OSC output: [ ]");
   }
-  
+
   drawKeypoints();
 }
 
 void drawKeypoints() {
+  // draw centroid
+  fill(255, 255, 255);
+  ellipse(centroid.x/2, centroid.y/2, 25, 25);
+
   for (PVector point : keypoints.values()) {
     if (point.z > 0.5) {
-      float r = map(point.x, 0, 600, 64, 255);
-      float g = map(point.y, 0, 500, 64, 255);
+      float r = map(point.x, 0, inputWidth, 64, 255);
+      float g = map(point.y, 0, inputHeight, 64, 255);
       float b = 100;
 
       //fill(random(128)+64, random(128)+64, random(128)+64);
       fill(r, g, b);
 
-      ellipse(point.x, point.y, random(6)+13, random(6)+13);
+      ellipse(point.x/2, point.y/2, random(6)+13, random(6)+13);
     }
   }
 }
@@ -133,21 +146,32 @@ void oscEvent(OscMessage theOscMessage) {
 
     // now send some OSC messages to the LCP
     //PVector nose = keypoints.get("nose");
-    
-    if(partCount > 0) {
-      PVector centroid = new PVector(sumX/partCount, sumY/partCount);
+
+
+    if (partCount > 0) {
+      //centroidOld = centroid;
+      //centroid.lerp(new PVector(sumX/partCount, sumY/partCount), 0.25);
+      centroid.lerp(new PVector(keypoints.get("rightWrist").x, keypoints.get("rightWrist").y), 0.33);
+      //centroid.lerp(new PVector(
+      //(keypoints.get("leftWrist").x + keypoints.get("rightWrist").x)/2,
+      //(keypoints.get("leftWrist").y + keypoints.get("rightWrist").y)/2
+      //), 0.33);
+      //PVector higherWrist = keypoints.get("leftWrist").y < keypoints.get("rightWrist").y ? keypoints.get("leftWrist") : keypoints.get("rightWrist");
+      //centroid.lerp(higherWrist, 0.33);
+
+
       messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
     } else {
       // no parts are visible -- dancer is offscreen or not detected!
-      messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
+      // messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
     }
   }
 }
 
 void messagePrinter(float x, float y, boolean flowActive) {
   outFlash = true;
-  float xOut = map(x, 0, 600, 0, buildPlateWidth-1);
-  float yOut = map(y, 0, 500, 0, buildPlateHeight-1);
+  float xOut = map(x, 0, 1920, 0, buildPlateWidth-1);
+  float yOut = map(y, 0, 1080, 0, buildPlateHeight-1);
 
   OscMessage position = new OscMessage("/lcp/control/position");
 
@@ -155,7 +179,7 @@ void messagePrinter(float x, float y, boolean flowActive) {
   position.add(yOut);
   position.add(105.0);
   oscP5.send(position, simulatorIAC); 
-  
+
   TableRow newRow = table.addRow();
   newRow.setInt("timeId", millis());
   newRow.setFloat("x", xOut);
@@ -170,8 +194,8 @@ void messagePrinter(float x, float y, boolean flowActive) {
   oscP5.send(flow, simulatorIAC);
 }
 
-void keyPressed(){
-  if (key == 's'){
+void keyPressed() {
+  if (key == 's') {
     saveTable(table, "data/centroids.csv");
   }
 }

@@ -28,8 +28,8 @@ import db from './firebaseInit'
 import "firebase/auth";
 import "firebase/firestore";
 
-const videoWidth = 600;
-const videoHeight = 500;
+const videoWidth = 1920;
+const videoHeight = 1080; // 1920 / 1080 == 16/9
 const stats = new Stats();
 
 let frameCountDisplayController = null;
@@ -66,14 +66,21 @@ async function setupCamera() {
   video.height = videoHeight;
 
   const mobile = isMobile();
+  // const stream = await navigator.mediaDevices.getUserMedia({
+  //   'audio': false,
+  //   'video': {
+  //     facingMode: 'user',
+  //     width: mobile ? undefined : videoWidth,
+  //     height: mobile ? undefined : videoHeight,
+  //   },
+  // });
   const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
     'video': {
-      facingMode: 'user',
-      width: mobile ? undefined : videoWidth,
-      height: mobile ? undefined : videoHeight,
-    },
+      deviceId: "78254b5a2e4f7302f1ee826fc3bb7a95fd6b4be9bb6f37973823ffd8672bb58b"
+    }
   });
+
+
   video.srcObject = stream;
 
   return new Promise((resolve) => {
@@ -103,10 +110,10 @@ const defaultResNetInputResolution = 250;
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    architecture: 'MobileNetV1',
-    outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
-    multiplier: defaultMobileNetMultiplier,
+    architecture: 'ResNet50',
+    outputStride: defaultResNetStride,
+    inputResolution: {width: 400, height: 226},
+    multiplier: 1,
     quantBytes: defaultQuantBytes
   },
   singlePoseDetection: {
@@ -451,8 +458,8 @@ function setupUserTapesListeners(ref, tapesFolder, playingController) {
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.getElementById('main').appendChild(stats.dom);
+  // stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  // document.getElementById('main').appendChild(stats.dom);
 }
 
 /**

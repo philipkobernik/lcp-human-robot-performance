@@ -30,6 +30,8 @@ import controlP5.*;
 import oscP5.*;
 import netP5.*;
 
+Table table;
+
 OscP5 oscP5;
 ControlP5 cp5;
 
@@ -53,9 +55,9 @@ int qualityFactor = 4;
 boolean showStroke = false;
 
 // ------ build plate ------
-int buildPlateWidth = 340;
+int buildPlateWidth = 465;
 int buildPlateWidthHalf = buildPlateWidth/2;
-int buildPlateHeight = 280;
+int buildPlateHeight = 365;
 int buildPlateHeightHalf = buildPlateHeight/2;
 
 int buildPlateDepth = 105;
@@ -148,6 +150,11 @@ void setup() {
     ;
 
   artifact = new Artifact();
+  
+  table = new Table();
+  table.addColumn("timeId");
+  table.addColumn("x");
+  table.addColumn("y");
 }
 
 void draw() {
@@ -187,6 +194,7 @@ void draw() {
 
     // deposit the droplet
     deposit(int(headPosXSmooth), int(headPosYSmooth));
+
   } else {
     // mouse coords update head position
     float xMapped = map(mouseX, 0.0, width, 0, buildPlateWidth-1);
@@ -219,6 +227,11 @@ void setHeadPosition(float x, float y) {
   float bufferScale = (1-buildPlateScale) / 2;
   headPosXSlider.setValue(x * buildPlateScale + buildPlateWidth * bufferScale); // buildPlate scaling
   headPosYSlider.setValue(y * buildPlateScale + buildPlateHeight * bufferScale); // buildPlate scaling
+  
+  TableRow newRow = table.addRow();
+  newRow.setInt("timeId", millis());
+  newRow.setFloat("y", x * buildPlateScale + buildPlateWidth * bufferScale);
+  newRow.setFloat("x", y * buildPlateScale + buildPlateHeight * bufferScale);
 }
 
 void deposit(float x, float y) {
@@ -314,6 +327,16 @@ void keyReleased() {
   if (key == 'o' || key == 'O') oscInputActive = !oscInputActive;
   if (key == 'r' || key == 'R') reset();
   if (key == ' ') noiseSeed((int) random(100000));
+  if (key == 'q') {
+    table = new Table();
+    table.addColumn("timeId");
+    table.addColumn("x");
+    table.addColumn("y");
+  }
+  
+  if (key == 'c'){
+    saveTable(table, "data/centroids-" + millis() + ".csv");
+  }
 }
 
 void reset() {
