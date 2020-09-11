@@ -83,19 +83,27 @@ void setup() {
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
     ;
-    
+
   sliderPlaybackTimer = cp5.addSlider("playbackTimer")
     .setPosition(25, 7*25)
     .setRange(0, 1000)
-  ;
-  
-  
+    .setColorForeground(color(120))
+    .setColorBackground(color(60))
+    .setColorActive(color(200))
+    .setColorLabel(color(200))
+    ;
+
+
   tracesStyleButton = cp5.addRadioButton("tracesStyle")
-  .setPosition(25, 8*25)
-  .addItem("lines", 1)
-  .addItem("dots", 2)
-  ;
-  
+    .setPosition(25, 8*25)
+    .addItem("lines", 1)
+    .addItem("dots", 2)
+    .setColorForeground(color(120))
+    .setColorBackground(color(60))
+    .setColorActive(color(200))
+    .setColorLabel(color(200))
+    ;
+
 
   minim = new Minim(this);
   in = minim.getLineIn();
@@ -224,6 +232,11 @@ void oscEvent(OscMessage theOscMessage) {
         );
     }
   }
+
+  if (theOscMessage.checkAddrPattern("/lcp/tracking/audioTrigger")) {
+    int trigger = theOscMessage.get(0).intValue();
+    toggleRecording();
+  }
 }
 
 void messagePrinter(float x, float y, boolean flowActive) {
@@ -277,7 +290,7 @@ void toggleRecording() {
   }
 }
 
-void tracesStyle(int a){
+void tracesStyle(int a) {
   toggleTracesStyle = a;
 }
 
