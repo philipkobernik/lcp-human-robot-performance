@@ -36,7 +36,6 @@ int currentLoop = 0;
 boolean recording = false;
 
 int currentPlaybackSequence = 0;
-int currentPlaybackLoop;
 
 int toggleTracesStyle = 1;
 
@@ -154,9 +153,9 @@ void drawKeypoints() {
       fill(r, g, b);
       noStroke();
       ellipse(
-        map(point.x, 0, 600, 0, scaledWidth),
-        map(point.y, 0, 500, 0, scaledHeight),
-        random(6)+13,
+        map(point.x, 0, 600, 0, scaledWidth), 
+        map(point.y, 0, 500, 0, scaledHeight), 
+        random(6)+13, 
         random(6)+13
         );
     }
@@ -267,6 +266,16 @@ void tracesStyle(int a) {
   toggleTracesStyle = a;
 }
 
+void reset() {
+  keypoints = new HashMap<String, PVector>();
+  sequences = new ArrayList<Sequence>();
+  currentSequence = 0;
+  currentLoop = 0;
+  recording = false;
+  currentPlaybackSequence = 0;
+}
+
 void keyReleased() {
   if (key == 'r' || key == 'R') toggleRecording();
+  if (key == 'x' || key == 'X') reset();
 }
