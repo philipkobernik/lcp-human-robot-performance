@@ -18,6 +18,7 @@ var firebaseConfig = {
   firebase.initializeApp(firebaseConfig);
   var db = firebase.database(); 
   var playbackRef = db.ref(`users/${userId}/playback`);
+  var audioTriggerRef = db.ref("audio/trigger");
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -37,6 +38,21 @@ var wekinatorPort = new osc.UDPPort({
   metadata: true
 });
 wekinatorPort.open();
+
+audioTriggerRef.on("value", function(snapshot) {
+  var trigger = snapshot.val();
+  if(trigger) {
+    udpPort.send({
+      address: "/lcp/tracking/audioTrigger",
+      args: [
+        {
+          type: "i",
+          value: 1
+        }
+      ]
+    });
+  }
+})
 
 playbackRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
