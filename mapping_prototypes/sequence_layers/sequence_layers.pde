@@ -244,24 +244,6 @@ void messagePrinter(float x, float y, boolean flowActive) {
   oscP5.send(flow, simulatorIAC);
 }
 
-void sendSequenceToPrinter(ArrayList<PVector> centroids, int nbLayers) {
-  OscMessage positions = new OscMessage("/lcp/control/positions");
-  for (PVector centroid : centroids) {
-    float cX = map(centroid.x, 0, 600, 0, buildPlateWidth-1);
-    float cY = map(centroid.y, 0, 500, 0, buildPlateHeight-1);
-
-    positions.add(cX);
-    positions.add(cY);
-    positions.add(105.0);
-  }
-  positions.add(nbLayers);
-  oscP5.send(positions, simulatorIAC);
-
-  OscMessage layers = new OscMessage("/lcp/control/layers");
-  layers.add(nbLayers);
-  oscP5.send(layers, simulatorIAC);
-}
-
 void toggleRecording() {
   recording = !recording;
 
