@@ -2,12 +2,6 @@ import java.util.Map;
 import oscP5.*;
 import netP5.*;
 import controlP5.*;
-import ddf.minim.*;
-import ddf.minim.analysis.*;
-
-Minim minim;
-AudioInput in;
-BeatDetect beat;
 
 OscP5 oscP5;
 NetAddress simulatorIAC;
@@ -103,12 +97,6 @@ void setup() {
     .setColorActive(color(200))
     .setColorLabel(color(200))
     ;
-
-
-  minim = new Minim(this);
-  in = minim.getLineIn();
-  beat = new BeatDetect();
-  beat.setSensitivity(1000); // 1sec buffer after beat is detected
 }
 
 void draw() {
@@ -141,10 +129,6 @@ void draw() {
   updateFlashingDots();
   drawKeypoints();
 
-  beat.detect(in.mix);
-  if (beat.isOnset()) {
-    toggleRecording();
-  }
 }
 
 Sequence getPlaybackSeq() {
