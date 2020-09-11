@@ -69,7 +69,7 @@ float headPosY = buildPlateHeight/2;
 float headPosXSmooth = buildPlateWidth/2;
 float headPosYSmooth = buildPlateHeight/2;
 int headPosZ = 105;
-float smoothFactor = 0.25;
+float smoothFactor = 0.1;
 
 // ------ deposition ------
 int dropletWidth = 3;

@@ -1,7 +1,7 @@
 class Sequence {
   // attributes
   ArrayList<HashMap<String, PVector>> poses;
-  ArrayList<PVector> centroids;
+  ArrayList<PVector> centers;
   int nbOfLoops = 10; // should it be defined at the start or defined by the end of the recording?
   int currentLoop = 0;
   int replayIndex = 0;
@@ -11,8 +11,8 @@ class Sequence {
   // functions
   Sequence() {
     poses = new ArrayList<HashMap<String, PVector>>();
-    centroids = new ArrayList<PVector>();
-    trace = new Trace();
+    centers = new ArrayList<PVector>();
+    trace = new Trace(nbOfLoops);
   }
 
   // display as it's being recorded
@@ -38,18 +38,20 @@ class Sequence {
     // display traces underneath
     drawTraces();
     // trace of current loop
-    trace.display(replayIndex, false);
+    trace.display(replayIndex, currentLoop, false);
+    // send data to printer
+    messagePrinter(centers.get(replayIndex).x, centers.get(replayIndex).y, true);
   }
   
   void drawTraces(){
     for (int i = 0; i < currentLoop; i++){
-      trace.display(centroids.size(), true);
+      trace.display(centers.size(),i, true);
     }
   }
 
   void addPose(HashMap<String, PVector> pose, PVector centroid) {
     poses.add(pose);
-    centroids.add(centroid);
+    centers.add(centroid);
     trace.addPoint(centroid);
   }
 

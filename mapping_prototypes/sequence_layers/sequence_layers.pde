@@ -14,13 +14,18 @@ NetAddress simulatorIAC;
 ControlP5 cp5;
 
 controlP5.Controller oscInLabel, oscOutLabel, troubleshootingLabel;
+controlP5.Slider sliderPlaybackTimer;
+controlP5.RadioButton tracesStyleButton;
+// timer to control the playback speed
+double timer = 500;
+double currentTime;
+
 
 // ------ build plate ------
 int buildPlateWidth = 340;
 int buildPlateWidthHalf = buildPlateWidth/2;
 int buildPlateHeight = 280;
 int buildPlateHeightHalf = buildPlateHeight/2;
-
 
 // ------ other ------
 boolean inFlash, outFlash = false;
@@ -31,14 +36,18 @@ String troubleshootingText = "If not receiving OSC: \n"
 // Note the HashMap's "key" is a String and "value" is an Integer
 HashMap<String, PVector> keypoints = new HashMap<String, PVector>();
 ArrayList<Sequence> sequences = new ArrayList<Sequence>();
+int currentSequence = 0;
+int currentLoop = 0;
 
 boolean recording = false;
 
 int currentPlaybackSequence = 0;
 int currentPlaybackLoop;
 
+int toggleTracesStyle = 1;
+
 void setup() {
-  size(1440, 810, P3D);
+  size(600, 500, P3D);
   frameRate(20);
   cp5 = new ControlP5(this);
 
@@ -75,6 +84,19 @@ void setup() {
     .setFont(createFont("Courier", 15))
     ;
     
+  sliderPlaybackTimer = cp5.addSlider("playbackTimer")
+    .setPosition(25, 7*25)
+    .setRange(0, 1000)
+  ;
+  
+  
+  tracesStyleButton = cp5.addRadioButton("tracesStyle")
+  .setPosition(25, 8*25)
+  .addItem("lines", 1)
+  .addItem("dots", 2)
+  ;
+  
+
   minim = new Minim(this);
   in = minim.getLineIn();
   beat = new BeatDetect();
@@ -84,6 +106,7 @@ void setup() {
 void draw() {
   // keep traces alive
   drawTraces();
+  timer = sliderPlaybackTimer.getValue();
 
   int red = recording ? 200 : 0;
   fill(red, 0, 0, 255);
@@ -96,22 +119,22 @@ void draw() {
     if (getPlaybackSeq().isDone()) {
       // advance to next sequence
       currentPlaybackSequence++;
+      currentTime = millis();
       //currentPlaybackSequence = (currentPlaybackSequence + 1) % sequences.size(); // loop around here
     } else {
-      getPlaybackSeq().incrementIndex();
+      if (millis()-currentTime > timer) {
+        getPlaybackSeq().incrementIndex();
+        currentTime = millis();
+      }
       getPlaybackSeq().display();
     }
-
-    //getPlaybackSeq().display();
-    // -- if not, advance current seq frame
-    // -- render frame pose
   }
 
   updateFlashingDots();
   drawKeypoints();
-  
+
   beat.detect(in.mix);
-  if(beat.isOnset()) {
+  if (beat.isOnset()) {
     toggleRecording();
   }
 }
@@ -158,7 +181,6 @@ void updateFlashingDots() {
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
-
 void oscEvent(OscMessage theOscMessage) {
   float sumX = 0;
   float sumY = 0;
@@ -172,16 +194,16 @@ void oscEvent(OscMessage theOscMessage) {
       float x = theOscMessage.get(i+3).floatValue();
       float y = theOscMessage.get(i+4).floatValue();
 
-      if (score > 0.5) {
-        sumX += x;
-        sumY += y;
-        partCount++;
-      }
+      /*if (score > 0.5) {
+       sumX += x;
+       sumY += y;
+       partCount++;
+       }*/
       keypoints.put(part, new PVector(x, y, score)); // score is stored as third component of the PVector
     }
 
-    PVector centroid = new PVector(sumX/partCount, sumY/partCount);
-
+    //PVector centroid = new PVector(sumX/partCount, sumY/partCount);
+    //PVector rightWrist = keypoints.get("");
 
     // now send some OSC messages to the LCP
     if (partCount > 0) {
@@ -193,11 +215,12 @@ void oscEvent(OscMessage theOscMessage) {
       //messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
     }
 
+
     // add pose and centroid to the sequence 
     if (recording) {
       sequences.get(sequences.size()-1).addPose(
         new HashMap<String, PVector>(keypoints), 
-        centroid
+        keypoints.get("nose")
         );
     }
   }
@@ -225,7 +248,6 @@ void messagePrinter(float x, float y, boolean flowActive) {
 }
 
 void sendSequenceToPrinter(ArrayList<PVector> centroids, int nbLayers) {
-
   OscMessage positions = new OscMessage("/lcp/control/positions");
   for (PVector centroid : centroids) {
     float cX = map(centroid.x, 0, 600, 0, buildPlateWidth-1);
@@ -248,17 +270,15 @@ void toggleRecording() {
 
   if (recording) {
     sequences.add(new Sequence());
-    //
   } else {
     // end the sequence, maybe calculate number loops or something
-    //
     sequences.get(sequences.size()-1).stopRecording();
     println("recording end");
-    // send OSC
-    // - centroids array
-    // - number of loops
-    sendSequenceToPrinter(sequences.get(sequences.size()-1).centroids, sequences.get(sequences.size()-1).nbOfLoops);
   }
+}
+
+void tracesStyle(int a){
+  toggleTracesStyle = a;
 }
 
 void keyReleased() {
