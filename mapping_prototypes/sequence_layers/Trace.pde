@@ -49,7 +49,12 @@ class Trace { //<>// //<>//
 
         noStroke();
         fill(255, 10);
-        ellipse(path.get(i).x + noiseFactor*dotsPosition.get(loop).get(i).x, path.get(i).y +dotsPosition.get(loop).get(i).y, 10, 10);
+        ellipse(
+          map(path.get(i).x, 0, 600, 0, scaledWidth) + noiseFactor*dotsPosition.get(loop).get(i).x, 
+          map(path.get(i).y, 0, 600, 0, scaledHeight) + dotsPosition.get(loop).get(i).y, 
+          10, 
+          10
+          );
       }
     }
   }
