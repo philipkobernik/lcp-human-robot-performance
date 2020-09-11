@@ -28,20 +28,23 @@ class Trace { //<>// //<>//
           noiseVector.x = random(-1, 1);
           noiseVector.y = random(-1, 1);
         }
-        vertex(path.get(i).x + noiseFactor*noiseVector.x, path.get(i).y + noiseFactor*noiseVector.y);
+        vertex(
+          map(path.get(i).x, 0, 600, 0, scaledWidth) + noiseFactor*noiseVector.x, 
+          map(path.get(i).y, 0, 600, 0, scaledHeight) + noiseFactor*noiseVector.y
+          );
         noiseVector.x = 0;
         noiseVector.y = 0;
       }
       endShape();
     } else if (toggleTracesStyle == 2) {
       for (int i = 0; i < index; i++) {
-      if (i == 0){
-        dotsPosition.add(new ArrayList<PVector>());
-      }
+        if (i == 0) {
+          dotsPosition.add(new ArrayList<PVector>());
+        }
         strokeWeight(1);
         //strokeWeight(10*map(i, 0, index, 0, 1));
         stroke(color(50));
-    
+
         dotsPosition.get(loop).add(new PVector(random(-1, 1), random(-1, 1)));
 
         noStroke();

@@ -31,10 +31,15 @@ class Sequence {
 
         //fill(random(128)+64, random(128)+64, random(128)+64);
         fill(r+g, b);
-        ellipse(point.x, point.y, 10, 10);
+        ellipse(
+          map(point.x, 0, 600, 0, scaledWidth), 
+          map(point.y, 0, 500, 0, scaledHeight), 
+          10, 
+          10
+          );
       }
     }
-    
+
     // display traces underneath
     drawTraces();
     // trace of current loop
@@ -42,10 +47,10 @@ class Sequence {
     // send data to printer
     messagePrinter(centers.get(replayIndex).x, centers.get(replayIndex).y, true);
   }
-  
-  void drawTraces(){
-    for (int i = 0; i < currentLoop; i++){
-      trace.display(centers.size(),i, true);
+
+  void drawTraces() {
+    for (int i = 0; i < currentLoop; i++) {
+      trace.display(centers.size(), i, true);
     }
   }
 
@@ -70,7 +75,7 @@ class Sequence {
   boolean isDone() {
     return (replayIndex == poses.size()-1 && currentLoop == nbOfLoops);
   }
-  
+
   boolean isRecording() {
     return _isRecording;
   }
@@ -79,7 +84,7 @@ class Sequence {
   }
 
   void drawConnections() {
-    stroke(200,100);
+    stroke(200, 100);
     strokeWeight(2);
     PVector lShoulder = poses.get(replayIndex).get("leftShoulder");
     PVector rShoulder = poses.get(replayIndex).get("rightShoulder");
@@ -115,12 +120,16 @@ class Sequence {
     drawLine(rHip, rKnee);
     PVector rAnkle = poses.get(replayIndex).get("rightAnkle");
     drawLine(rKnee, rAnkle);
-   
   }
 
   void drawLine(PVector p1, PVector p2) {
     if (p1.z > 0.5 && p2.z > 0.5) {
-      line(p1.x, p1.y, p2.x, p2.y);
+      line(
+        map(p1.x, 0, 600, 0, scaledWidth), 
+        map(p1.y, 0, 500, 0, scaledHeight), 
+        map(p2.x, 0, 600, 0, scaledWidth), 
+        map(p2.y, 0, 500, 0, scaledHeight)
+        );
     }
   }
 }

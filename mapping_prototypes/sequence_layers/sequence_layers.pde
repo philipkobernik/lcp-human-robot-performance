@@ -40,8 +40,11 @@ int currentPlaybackLoop;
 
 int toggleTracesStyle = 1;
 
+int scaledWidth = 1200;
+int scaledHeight = 1000;
+
 void setup() {
-  size(600, 500, P3D);
+  size(1200, 1000, P3D);
   frameRate(20);
   cp5 = new ControlP5(this);
 
@@ -128,7 +131,6 @@ void draw() {
 
   updateFlashingDots();
   drawKeypoints();
-
 }
 
 Sequence getPlaybackSeq() {
@@ -151,7 +153,12 @@ void drawKeypoints() {
       //fill(random(128)+64, random(128)+64, random(128)+64);
       fill(r, g, b);
       noStroke();
-      ellipse(point.x, point.y, random(6)+13, random(6)+13);
+      ellipse(
+        map(point.x, 0, 600, 0, scaledWidth),
+        map(point.y, 0, 500, 0, scaledHeight),
+        random(6)+13,
+        random(6)+13
+        );
     }
   }
 }
