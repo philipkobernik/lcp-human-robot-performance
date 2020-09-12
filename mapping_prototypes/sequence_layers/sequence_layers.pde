@@ -25,7 +25,8 @@ int buildPlateHeightHalf = buildPlateHeight/2;
 boolean inFlash, outFlash = false;
 String troubleshootingText = "If not receiving OSC: \n"
   + "1. is posenet tracker running? \n"
-  + "2. is firebase-osc-relay running?";
+  + "2. is firebase-osc-relay running? \n\n"
+  + "press 'x' key to reset";
 
 // Note the HashMap's "key" is a String and "value" is an Integer
 HashMap<String, PVector> keypoints = new HashMap<String, PVector>();
@@ -81,7 +82,7 @@ void setup() {
     ;
 
   sliderPlaybackTimer = cp5.addSlider("playbackTimer")
-    .setPosition(25, 7*25)
+    .setPosition(25, 9*25)
     .setRange(0, 1000)
     .setColorForeground(color(120))
     .setColorBackground(color(60))
@@ -91,7 +92,7 @@ void setup() {
 
 
   tracesStyleButton = cp5.addRadioButton("tracesStyle")
-    .setPosition(25, 8*25)
+    .setPosition(25, 10*25)
     .addItem("lines", 1)
     .addItem("dots", 2)
     .setColorForeground(color(120))
@@ -258,7 +259,6 @@ void toggleRecording() {
   } else {
     // end the sequence, maybe calculate number loops or something
     sequences.get(sequences.size()-1).stopRecording();
-    println("recording end");
   }
 }
 
