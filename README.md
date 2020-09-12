@@ -45,10 +45,15 @@ Generators, calibration routines should live in here.
 3. start the LCP simulator
     * open finder
     * click `lcp-human-robot-performance` under favorites bar
-    * navigate into `lcp_sim`
+    * navigate into `simulation_prototypes > lcp_sim`
     * double click the `lcp_sim.pdf` file
     * click the play button to start the sketch
-
+    
+4. start the audio tracker
+    * open [LCP Audio Tracker](https://lcp-audio.surge.sh/)
+    * click "Open Microphone" and accept the access prompt from the browser
+    * test it by snapping, or clapping. the goal is for your sound to cause one trigger, not multiple. short sounds like clap or snap work better than voice. Adjust the threshold if it is too sensitive, or not sensitive enough.
+    * once you have tested the audio trigger, make sure that your browser's "selected" tab is the lcp-posenet one-- otherwise the camera will turn off after a short time
 
 4. start the posenet tracker
     * open [posenet camera tracker](https://lcp-posenet.surge.sh/camera.html)
