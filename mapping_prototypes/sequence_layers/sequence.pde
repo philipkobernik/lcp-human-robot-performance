@@ -54,10 +54,10 @@ class Sequence {
     }
   }
 
-  void addPose(HashMap<String, PVector> pose, PVector centroid) {
+  void addPose(HashMap<String, PVector> pose, PVector _focusPart) {
     poses.add(pose);
-    centers.add(centroid);
-    trace.addPoint(centroid);
+    centers.add(_focusPart);
+    trace.addPoint(_focusPart);
   }
 
   void setNumberofLoops(int nbLoops) {

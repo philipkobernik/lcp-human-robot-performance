@@ -1,4 +1,4 @@
-import java.util.Map;
+import java.util.*;
 import oscP5.*;
 import netP5.*;
 import controlP5.*;
@@ -43,6 +43,8 @@ int toggleTracesStyle = 1;
 int scaledWidth = 1200;
 int scaledHeight = 1000;
 
+String focusPart = "nose";
+
 void setup() {
   size(1200, 1000, P3D);
   frameRate(20);
@@ -59,6 +61,16 @@ void setup() {
    * send messages back to this sketch.
    */
   simulatorIAC = new NetAddress("127.0.0.1", 10420);
+
+  List focusPartList = Arrays.asList("nose", "leftEye", "rightEye", "leftEar", "rightEar", "leftShoulder", "rightShoulder", "leftElbow", "rightElbow", "leftWrist", "rightWrist", "leftHip", "rightHip", "leftKnee", "rightKnee", "leftAnkle", "rightAnkle");
+  /* add a ScrollableList, by default it behaves like a DropdownList */
+  cp5.addScrollableList("what_part_draws")
+    .setPosition(25, 11*25)
+    .setSize(100, 450)
+    .setBarHeight(20)
+    .setItemHeight(20)
+    .addItems(focusPartList)
+    ;
 
   oscInLabel = cp5.addTextlabel("oscInLabel")
     .setText("OSC input: [ ]")
@@ -100,6 +112,8 @@ void setup() {
     .setColorActive(color(200))
     .setColorLabel(color(200))
     ;
+
+  messagePrinter(0, 0, false); // start with flow off.
 }
 
 void draw() {
@@ -144,21 +158,35 @@ void drawTraces() {
 }
 
 void drawKeypoints() {
-  for (PVector point : keypoints.values()) {
+
+  for (Map.Entry<String, PVector> keypoint : keypoints.entrySet()) {
+    PVector point = keypoint.getValue();
+    String partName = keypoint.getKey();
+
     if (point.z > 0.5) {
       float r = map(point.x, 0, 600, 64, 255);
       float g = map(point.y, 0, 500, 64, 255);
       float b = 100;
 
-      //fill(random(128)+64, random(128)+64, random(128)+64);
-      fill(r, g, b);
       noStroke();
-      ellipse(
-        map(point.x, 0, 600, 0, scaledWidth), 
-        map(point.y, 0, 500, 0, scaledHeight), 
-        random(6)+13, 
-        random(6)+13
-        );
+
+      if (partName.equals(focusPart)) {
+        fill(255, 255, 255);
+        ellipse(
+          map(point.x, 0, 600, 0, scaledWidth), 
+          map(point.y, 0, 500, 0, scaledHeight), 
+          random(6)+26, 
+          random(6)+26
+          );
+      } else {
+        fill(r, g, b);
+        ellipse(
+          map(point.x, 0, 600, 0, scaledWidth), 
+          map(point.y, 0, 500, 0, scaledHeight), 
+          random(6)+13, 
+          random(6)+13
+          );
+      }
     }
   }
 }
@@ -219,7 +247,7 @@ void oscEvent(OscMessage theOscMessage) {
     if (recording) {
       sequences.get(sequences.size()-1).addPose(
         new HashMap<String, PVector>(keypoints), 
-        keypoints.get("nose")
+        keypoints.get(focusPart)
         );
     }
   }
@@ -244,7 +272,7 @@ void messagePrinter(float x, float y, boolean flowActive) {
 
   OscMessage flow = new OscMessage("/lcp/control/flow");
   if (flowActive) {
-    flow.add(2.5);
+    flow.add(7.5);
   } else {
     flow.add(0.0);
   }
@@ -273,9 +301,15 @@ void reset() {
   currentLoop = 0;
   recording = false;
   currentPlaybackSequence = 0;
+  messagePrinter(0, 0, false); // start with flow off
 }
 
 void keyReleased() {
   if (key == 'r' || key == 'R') toggleRecording();
   if (key == 'x' || key == 'X') reset();
+}
+
+void what_part_draws(int dropdownIndex) {
+  /* request the selected item based on index n */
+  focusPart = (String)cp5.get(ScrollableList.class, "what_part_draws").getItem(dropdownIndex).get("text");
 }
