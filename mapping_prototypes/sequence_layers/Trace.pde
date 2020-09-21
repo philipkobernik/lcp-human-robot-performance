@@ -1,4 +1,4 @@
-class Trace { //<>// //<>//
+class Trace { //<>// //<>// //<>// //<>//
   ArrayList<PVector> path = new ArrayList<PVector>();
   int currentPosition = 0;
   PVector noiseVector = new PVector(0, 0);

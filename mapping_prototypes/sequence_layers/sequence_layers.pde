@@ -44,6 +44,7 @@ int scaledWidth = 1200;
 int scaledHeight = 1000;
 
 String focusPart = "nose";
+BodyParts bodyPartsManager;
 
 void setup() {
   size(1200, 1000, P3D);
@@ -60,16 +61,21 @@ void setup() {
    * and the port of the remote location address are the same, hence you will
    * send messages back to this sketch.
    */
+
   simulatorIAC = new NetAddress("127.0.0.1", 10420);
 
-  List focusPartList = Arrays.asList("nose", "leftEye", "rightEye", "leftEar", "rightEar", "leftShoulder", "rightShoulder", "leftElbow", "rightElbow", "leftWrist", "rightWrist", "leftHip", "rightHip", "leftKnee", "rightKnee", "leftAnkle", "rightAnkle");
+  List focusPartList = Arrays.asList("rightKidney", "leftKidney", "hyoidBone", "leftVestibular", "jadePillow", "leftShoulder", "rightShoulder", "leftElbow", "rightElbow", "leftWrist", "rightWrist", "leftHip", "rightHip", "leftKnee", "rightKnee", "leftAnkle", "rightAnkle");
   /* add a ScrollableList, by default it behaves like a DropdownList */
   cp5.addScrollableList("what_part_draws")
-    .setPosition(25, 11*25)
+    .setPosition(25, 11.5*25)
     .setSize(100, 450)
     .setBarHeight(20)
     .setItemHeight(20)
     .addItems(focusPartList)
+    .setColorForeground(color(120))
+    .setColorBackground(color(60))
+    .setColorActive(color(200))
+    .setColorLabel(color(200))
     ;
 
   oscInLabel = cp5.addTextlabel("oscInLabel")
@@ -114,6 +120,7 @@ void setup() {
     ;
 
   messagePrinter(0, 0, false); // start with flow off.
+  bodyPartsManager = new BodyParts();
 }
 
 void draw() {
@@ -170,25 +177,42 @@ void drawKeypoints() {
 
       noStroke();
 
-      if (partName.equals(focusPart)) {
-        fill(255, 255, 255);
-        ellipse(
-          map(point.x, 0, 600, 0, scaledWidth), 
-          map(point.y, 0, 500, 0, scaledHeight), 
-          random(6)+26, 
-          random(6)+26
-          );
-      } else {
-        fill(r, g, b);
-        ellipse(
-          map(point.x, 0, 600, 0, scaledWidth), 
-          map(point.y, 0, 500, 0, scaledHeight), 
-          random(6)+13, 
-          random(6)+13
-          );
-      }
+      fill(r, g, b);
+      ellipse(
+        map(point.x, 0, 600, 0, scaledWidth), 
+        map(point.y, 0, 500, 0, scaledHeight), 
+        random(6)+13, 
+        random(6)+13
+        );
+
+      /*if (partName.equals(focusPart)) {
+       fill(255, 255, 255);
+       ellipse(
+       map(point.x, 0, 600, 0, scaledWidth), 
+       map(point.y, 0, 500, 0, scaledHeight), 
+       random(6)+26, 
+       random(6)+26
+       );
+       } else {
+       fill(r, g, b);
+       ellipse(
+       map(point.x, 0, 600, 0, scaledWidth), 
+       map(point.y, 0, 500, 0, scaledHeight), 
+       random(6)+13, 
+       random(6)+13
+       );
+       }*/
     }
   }
+
+  //focus on
+  fill(255, 255, 255);
+  ellipse(
+    map(bodyPartsManager.position(focusPart).x, 0, 600, 0, scaledWidth), 
+    map(bodyPartsManager.position(focusPart).y, 0, 500, 0, scaledHeight), 
+    random(6)+26, 
+    random(6)+26
+    );
 }
 
 void updateFlashingDots() {
