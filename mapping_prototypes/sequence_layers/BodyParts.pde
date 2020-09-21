@@ -48,12 +48,6 @@ class BodyParts {
       pos = (keypoints.get("leftEar").add(keypoints.get("rightEar"))).div(2);
     }
     
-    
-    
-    
-    
-    
-    
     return pos;
   }
 }

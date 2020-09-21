@@ -16,9 +16,11 @@ var firebaseConfig = {
 
   let userId = process.argv.length > 2 ? process.argv[2] : 'default';
   firebase.initializeApp(firebaseConfig);
-  var db = firebase.database(); 
+  var db = firebase.database();
   var playbackRef = db.ref(`users/${userId}/playback`);
   var audioTriggerRef = db.ref("audio/trigger");
+  //not sure what is this localAddress
+  var focusPartRef = db.ref("focuspart");
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -54,6 +56,24 @@ audioTriggerRef.on("value", function(snapshot) {
   }
 })
 
+// trying to create a new connection with firebase HERE
+focusPartRef.on("value", function(snapshot) {
+  var focuspart = snapshot.val();
+  if(!focuspart) {
+    console.error("error on body parts");
+  };
+
+  udpPort.send({
+      address: "/lcp/tracking/focusPart",
+      args: [
+        {
+          type: "i",
+          value: focuspart
+        }
+      ]
+    });
+})
+
 playbackRef.on("value", function(snapshot) {
   var keypoints = snapshot.val();
   if(!keypoints) {
@@ -61,7 +81,7 @@ playbackRef.on("value", function(snapshot) {
     console.error("Perhaps you need to open the posenet tracker to initialize the user");
     return false;
   };
-  
+
   var partsArray = keypoints.map(part => {
     return [
       {
@@ -87,7 +107,7 @@ playbackRef.on("value", function(snapshot) {
 
   // let nosePos = keypoints[0].position;
   // let rWrist = keypoints[10].position;
-  
+
   // let distance = Math.sqrt(Math.pow(nosePos.x - rWrist.x, 2) + Math.pow(nosePos.y - rWrist.y,2));
 
   // wekInputs = wekInputs.concat(
