@@ -65,6 +65,8 @@ void setup() {
   simulatorIAC = new NetAddress("127.0.0.1", 10420);
 
   List focusPartList = Arrays.asList("rightKidney", "leftKidney", "hyoidBone", "leftVestibular", "jadePillow", "leftShoulder", "rightShoulder", "leftElbow", "rightElbow", "leftWrist", "rightWrist", "leftHip", "rightHip", "leftKnee", "rightKnee", "leftAnkle", "rightAnkle");
+  List focusPartList2 = Arrays.asList("rightKidney", "leftKidney", "hyoidBone", "leftVestibular", "jadePillow", "rightFibula", "aorta", "heartAndLungs", "perineum", "tail", "leftFloatingRibs", "rightDistalRadius");
+
   /* add a ScrollableList, by default it behaves like a DropdownList */
   //cp5.addScrollableList("what_part_draws")
   //  .setPosition(25, 11.5*25)
@@ -207,7 +209,7 @@ void drawKeypoints() {
     }
   }
 
-  //focus on
+  //body part where focus is on
   fill(255, 255, 255);
   ellipse(
     map(bodyPartsManager.position(focusPart).x, 0, 600, 0, scaledWidth), 
