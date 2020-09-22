@@ -8,8 +8,7 @@ import 'firebase/database'
 
 import { useList, useObjectVal } from 'react-firebase-hooks/database';
 
-const focusParts = ['jadePillow', 'rightKidney', 'leftShoulder'];
-
+const focusParts = ['rightKidney', 'leftKidney', 'hyoidBone', 'leftVestibular', 'jadePillow', 'rightFibula', 'aorta', 'heartAndLungs', 'perineum', 'tail', 'leftFloatingRibs', 'reqightDistalRadius'];
 
 const handleRadio = (e) => {
   db.ref('ui/control/focusPart').set(e.target.value);
