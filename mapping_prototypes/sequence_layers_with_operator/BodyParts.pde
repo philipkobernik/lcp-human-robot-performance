@@ -16,7 +16,7 @@ class BodyParts {
    */
   PVector position(String part) {
     // RIGHT KIDNEY
-    PVector pos = new PVector(-100,-100);
+    PVector pos = new PVector(keypoints.get("nose").x, keypoints.get("nose").y);
     float scoreRS = keypoints.get("rightShoulder").z;
     float scoreRH = keypoints.get("rightHip").z;
     if (part.equals("rightKidney") && scoreRS > scoreThreshold && scoreRH > scoreThreshold) {

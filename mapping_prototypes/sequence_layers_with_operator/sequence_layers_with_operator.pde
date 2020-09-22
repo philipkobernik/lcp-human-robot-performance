@@ -165,6 +165,8 @@ void drawTraces() {
 }
 
 void drawKeypoints() {
+  if(keypoints.size() == 0) return;
+
 
   for (Map.Entry<String, PVector> keypoint : keypoints.entrySet()) {
     PVector point = keypoint.getValue();
@@ -270,8 +272,8 @@ void oscEvent(OscMessage message) {
     // add pose and centroid to the sequence 
     if (recording) {
       sequences.get(sequences.size()-1).addPose(
-        new HashMap<String, PVector>(keypoints), 
-        keypoints.get(focusPart)
+        new HashMap<String, PVector>(keypoints),
+        new PVector(bodyPartsManager.position(focusPart).x, bodyPartsManager.position(focusPart).y)
         );
     }
   }
