@@ -19,8 +19,8 @@ var firebaseConfig = {
   var db = firebase.database();
   var playbackRef = db.ref(`users/${userId}/playback`);
   var audioTriggerRef = db.ref("audio/trigger");
-  //not sure what is this localAddress
-  var focusPartRef = db.ref("focuspart");
+  var focusPartRef = db.ref("ui/control/focusPart");
+  var recordingRef = db.ref("ui/control/recording");
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -56,19 +56,33 @@ audioTriggerRef.on("value", function(snapshot) {
   }
 })
 
-// trying to create a new connection with firebase HERE
 focusPartRef.on("value", function(snapshot) {
-  var focuspart = snapshot.val();
-  if(!focuspart) {
-    console.error("error on body parts");
+  var focusPart = snapshot.val();
+  if(!focusPart) {
+    console.error("error on body parts-- focusPart is falsey");
+    return;
   };
 
   udpPort.send({
-      address: "/lcp/tracking/focusPart",
+      address: "/lcp/control/focusPart",
+      args: [
+        {
+          type: "s",
+          value: focusPart
+        }
+      ]
+    });
+})
+
+recordingRef.on("value", function(snapshot) {
+  var isRecording = snapshot.val(); // JS boolean
+
+  udpPort.send({
+      address: "/lcp/control/recording",
       args: [
         {
           type: "i",
-          value: focuspart
+          value: isRecording ? 1 : 0 // transformed to 0/1 ints
         }
       ]
     });
