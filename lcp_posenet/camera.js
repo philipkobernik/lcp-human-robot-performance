@@ -66,14 +66,20 @@ async function setupCamera() {
   video.height = videoHeight;
 
   const mobile = isMobile();
+  // const stream = await navigator.mediaDevices.getUserMedia({
+  //   'audio': false,
+  //   'video': {
+  //     facingMode: 'user',
+  //     width: mobile ? undefined : videoWidth,
+  //     height: mobile ? undefined : videoHeight,
+  //   },
+  // });
+
   const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
     'video': {
-      facingMode: 'user',
-      width: mobile ? undefined : videoWidth,
-      height: mobile ? undefined : videoHeight,
-    },
-  });
+      deviceId: "78254b5a2e4f7302f1ee826fc3bb7a95fd6b4be9bb6f37973823ffd8672bb58b"
+    }
+  })
   video.srcObject = stream;
 
   return new Promise((resolve) => {
