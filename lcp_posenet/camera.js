@@ -572,7 +572,7 @@ function detectPoseInRealTime(video, net) {
       ctx.save();
       ctx.scale(-1, 1);
       ctx.translate(-videoWidth, 0);
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+      // ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
       ctx.restore();
     }
 
@@ -594,15 +594,26 @@ function detectPoseInRealTime(video, net) {
       if(guiState.tapeDeck.recording == false && guiState.tapeDeck.playing) {
 
         if(guiState.frameCounter >= guiState.sequence.length) {
-          guiState.frameCounter = 0;
+          guiState.frameCounter = 0; // wrap/loop
         }
 
-        if(guiState.sequence.length > 0) {
+        if(guiState.sequence.length > 0) { // are there any frames in this sequence?
+          // get framePose object from sequence array
+          // TODO storing animation index on the guiState object-- short-sighted design, prone
+          //   bugs
+          // really there is too much on guiState
+          // that said, the hackiest way to build in multiplayer is to access a list of students,
+          // and go through each one. If that user is streaming data, then they will be rendered
+          // to the canvas. A scaled down size. The scaled down avatar will have the ability to move.
+          // centroid position in the frame will move the avatar around the screen.
+          //
+          // so the system can maintain a ref with a list of users.
+          // earliest version, just try to render everyone.
           let framePose = guiState.sequence[guiState.frameCounter];
           guiState.frameCounter++;
-          frameCountDisplayController.setValue(guiState.frameCounter);
+          frameCountDisplayController.setValue(guiState.frameCounter); // update framerate
 
-          if(framePose) {
+          if(framePose) { // if it is real
 
             // send recorded frame to firebase //  !  //
             db.ref("users/" + guiState.userId + "/playback").set(framePose.keypoints);
@@ -620,14 +631,18 @@ function detectPoseInRealTime(video, net) {
           }
         }
       } else {
-        db.ref("users/" + guiState.userId + "/playback").set(keypoints);
         // to firebase live // > //
+        db.ref("users/" + guiState.userId + "/playback").set(keypoints);
+        // calculate centroid
+        // set centroid in keypoints?
+
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
         }
         if (guiState.output.showSkeleton) {
           drawSkeleton(keypoints, minPartConfidence, ctx);
         }
+        // drawCentroid(keypoints, minPartConfidence, ctx);
         if (guiState.output.showBoundingBox) {
           drawBoundingBox(keypoints, ctx);
         }
