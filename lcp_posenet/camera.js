@@ -459,6 +459,34 @@ function setupFPS() {
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
+function initDancers() {
+  const canvas = document.getElementById('output');
+  const ctx = canvas.getContext('2d');
+
+  let minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
+  let minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
+
+  let users = ["philip", "sam", "mark", "brooke", "test"];
+  for(var i=0; i< users.length; i++) {
+    db.ref("users/" + users[i] + "/playback").on("value", function(snapshot) {
+
+      var keypoints = snapshot.val();
+
+      if (guiState.output.showPoints) {
+        drawKeypoints(keypoints, minPartConfidence, ctx);
+      }
+      if (guiState.output.showSkeleton) {
+        drawSkeleton(keypoints, minPartConfidence, ctx);
+      }
+      // drawCentroid(keypoints, minPartConfidence, ctx);
+      if (guiState.output.showBoundingBox) {
+        drawBoundingBox(keypoints, ctx);
+      }
+    })
+  }
+
+}
+
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
@@ -583,71 +611,11 @@ function detectPoseInRealTime(video, net) {
 
     const { score, keypoints } = pose[0];
 
-      if(guiState.tapeDeck.recording) {
-        guiState.sequence = guiState.sequence.concat({ score, keypoints });
-
-        guiState.frameCounter++;
-        frameCountDisplayController.setValue(guiState.frameCounter);
-      }
-
-      // set the keypoints array with one firebase setter function!
-      if(guiState.tapeDeck.recording == false && guiState.tapeDeck.playing) {
-
-        if(guiState.frameCounter >= guiState.sequence.length) {
-          guiState.frameCounter = 0; // wrap/loop
-        }
-
-        if(guiState.sequence.length > 0) { // are there any frames in this sequence?
-          // get framePose object from sequence array
-          // TODO storing animation index on the guiState object-- short-sighted design, prone
-          //   bugs
-          // really there is too much on guiState
-          // that said, the hackiest way to build in multiplayer is to access a list of students,
-          // and go through each one. If that user is streaming data, then they will be rendered
-          // to the canvas. A scaled down size. The scaled down avatar will have the ability to move.
-          // centroid position in the frame will move the avatar around the screen.
-          //
-          // so the system can maintain a ref with a list of users.
-          // earliest version, just try to render everyone.
-          let framePose = guiState.sequence[guiState.frameCounter];
-          guiState.frameCounter++;
-          frameCountDisplayController.setValue(guiState.frameCounter); // update framerate
-
-          if(framePose) { // if it is real
-
-            // send recorded frame to firebase //  !  //
-            db.ref("users/" + guiState.userId + "/playback").set(framePose.keypoints);
-
-            // play recorded frame //  !  //
-            if (guiState.output.showPoints) {
-              drawKeypoints(framePose.keypoints, minPartConfidence, ctx);
-            }
-            if (guiState.output.showSkeleton) {
-              drawSkeleton(framePose.keypoints, minPartConfidence, ctx);
-            }
-            if (guiState.output.showBoundingBox) {
-              drawBoundingBox(framePose.keypoints, ctx);
-            }
-          }
-        }
-      } else {
-        // to firebase live // > //
-        db.ref("users/" + guiState.userId + "/playback").set(keypoints);
-        // calculate centroid
-        // set centroid in keypoints?
-
-        if (guiState.output.showPoints) {
-          drawKeypoints(keypoints, minPartConfidence, ctx);
-        }
-        if (guiState.output.showSkeleton) {
-          drawSkeleton(keypoints, minPartConfidence, ctx);
-        }
-        // drawCentroid(keypoints, minPartConfidence, ctx);
-        if (guiState.output.showBoundingBox) {
-          drawBoundingBox(keypoints, ctx);
-        }
-
-      }
+    // set the keypoints array with one firebase setter function!
+    // to firebase live // > //
+    db.ref("users/" + guiState.userId + "/playback").set(keypoints);
+    // calculate centroid
+    // set centroid in keypoints?
 
 
     // End monitoring code for frames per second
@@ -688,6 +656,7 @@ export async function bindPage() {
 
   setupGui([], net);
   setupFPS();
+  initDancers();
   detectPoseInRealTime(video, net);
 }
 
