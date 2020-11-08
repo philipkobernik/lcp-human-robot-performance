@@ -14,10 +14,12 @@ var firebaseConfig = {
     appId: process.env.FIREBASE_APP_ID
   };
 
+  let usersList = ["mark", "sam", "brooke", "philip"];
+
   let userId = process.argv.length > 2 ? process.argv[2] : 'default';
   firebase.initializeApp(firebaseConfig);
   var db = firebase.database();
-  var playbackRef = db.ref(`users/${userId}/playback`);
+  //var playbackRef = db.ref(`users/${userId}/playback`);
   var audioTriggerRef = db.ref("audio/trigger");
   var focusPartRef = db.ref("ui/control/focusPart");
   var recordingRef = db.ref("ui/control/recording");
@@ -40,21 +42,6 @@ var wekinatorPort = new osc.UDPPort({
   metadata: true
 });
 wekinatorPort.open();
-
-audioTriggerRef.on("value", function(snapshot) {
-  var trigger = snapshot.val();
-  if(trigger) {
-    udpPort.send({
-      address: "/lcp/tracking/audioTrigger",
-      args: [
-        {
-          type: "i",
-          value: 1
-        }
-      ]
-    });
-  }
-})
 
 focusPartRef.on("value", function(snapshot) {
   var focusPart = snapshot.val();
@@ -88,10 +75,10 @@ recordingRef.on("value", function(snapshot) {
     });
 })
 
-playbackRef.on("value", function(snapshot) {
+var snapshotHandler = function(index, snapshot) { // creates a listener -- or a binding to firebase server
   var keypoints = snapshot.val();
   if(!keypoints) {
-    console.error(`Error: there is no user ${userId} on firebase`);
+    console.error(`Error: there is no user ______ on firebase`);
     console.error("Perhaps you need to open the posenet tracker to initialize the user");
     return false;
   };
@@ -119,46 +106,21 @@ playbackRef.on("value", function(snapshot) {
 
   var wekInputs = [];
 
-  // let nosePos = keypoints[0].position;
-  // let rWrist = keypoints[10].position;
-
-  // let distance = Math.sqrt(Math.pow(nosePos.x - rWrist.x, 2) + Math.pow(nosePos.y - rWrist.y,2));
-
-  // wekInputs = wekInputs.concat(
-  //   {
-  //     type: "f",
-  //     value: distance
-  //   }
-  // );
-
-  // [0,1,2,3,4,5,6].forEach(index => {
-  //   wekInputs = wekInputs.concat(
-  //     {
-  //       type: "f",
-  //       value: keypoints[index].position.x
-  //     }
-  //   );
-  //   wekInputs = wekInputs.concat(
-  //     {
-  //       type: "f",
-  //       value: keypoints[index].position.y
-  //     }
-  //   );
-  // }); // list of 14 floats
-
-  // if(distance !== NaN) {
-  //   wekinatorPort.send({
-  //     address: "/wek/inputs",
-  //     args: wekInputs
-  //   })
-  // }
-
+  //console.log(`received data from ___, sending as id ${index}`);
   udpPort.send({
-    address: `/lcp/tracking/pose`,
+    address: `/lcp/tracking/multi/${index}`,
     args: partsArray
   });
+};
 
+var arrayOfRefs = usersList.map(function(user) {
+  return db.ref(`users/${user}/playback`)
 });
+
+for(var i=0; i<usersList.length; i++) {
+  var addr = `users/${usersList[i]}/playback`;
+  arrayOfRefs[i].on("value", snapshotHandler.bind(null, i));
+}
 
 console.log("\nwelcome to firebase_osc_relay!\n")
 
