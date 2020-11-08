@@ -34,6 +34,8 @@ const stats = new Stats();
 
 let frameCountDisplayController = null;
 
+let userState = [];
+
 Date.prototype.toIsoString = function() {
     var tzo = -this.getTimezoneOffset(),
         dif = tzo >= 0 ? '+' : '-',
@@ -460,28 +462,15 @@ function setupFPS() {
  * happens. This function loops with a requestAnimationFrame method.
  */
 function initDancers() {
-  const canvas = document.getElementById('output');
-  const ctx = canvas.getContext('2d');
-
-  let minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
-  let minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
 
   let users = ["philip", "sam", "mark", "brooke", "test"];
+
+  userState = new Array(users.length);
+
   for(var i=0; i< users.length; i++) {
+    let storedIndex = parseInt(`${i}`);
     db.ref("users/" + users[i] + "/playback").on("value", function(snapshot) {
-
-      var keypoints = snapshot.val();
-
-      if (guiState.output.showPoints) {
-        drawKeypoints(keypoints, minPartConfidence, ctx);
-      }
-      if (guiState.output.showSkeleton) {
-        drawSkeleton(keypoints, minPartConfidence, ctx);
-      }
-      // drawCentroid(keypoints, minPartConfidence, ctx);
-      if (guiState.output.showBoundingBox) {
-        drawBoundingBox(keypoints, ctx);
-      }
+      userState[storedIndex] = snapshot.val(); // set the keypoints in userState;
     })
   }
 
@@ -594,15 +583,13 @@ function detectPoseInRealTime(video, net) {
     minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
     minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
 
-    ctx.clearRect(0, 0, videoWidth, videoHeight);
-
-    if (guiState.output.showVideo) {
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.translate(-videoWidth, 0);
-      // ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-      ctx.restore();
-    }
+    //if (guiState.output.showVideo) {
+      //ctx.save();
+      //ctx.scale(-1, 1);
+      //ctx.translate(-videoWidth, 0);
+      //// ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+      //ctx.restore();
+    //}
 
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
@@ -612,19 +599,49 @@ function detectPoseInRealTime(video, net) {
     const { score, keypoints } = pose[0];
 
     // set the keypoints array with one firebase setter function!
-    // to firebase live // > //
+    //
+    // calc centroid
+    // keypoints.concat(centroid)
+    // keypoints.concat(canvasPosition)
     db.ref("users/" + guiState.userId + "/playback").set(keypoints);
     // calculate centroid
     // set centroid in keypoints?
+    //
+    //console.log(userState);
+    renderUsers(ctx);
 
 
     // End monitoring code for frames per second
     stats.end();
 
+
     requestAnimationFrame(poseDetectionFrame);
   }
 
   poseDetectionFrame();
+}
+
+function renderUsers(ctx) {
+  let minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
+  let minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
+
+  ctx.clearRect(0, 0, videoWidth, videoHeight);
+
+  for(var i=0; i<userState.length; i++) {
+    if(userState[i]) {
+      //console.log('render ' + i);
+
+      if (guiState.output.showPoints) {
+        drawKeypoints(userState[i], minPartConfidence, ctx);
+      }
+      if (guiState.output.showSkeleton) {
+        drawSkeleton(userState[i], minPartConfidence, ctx);
+      }
+      if (guiState.output.showBoundingBox) {
+        drawBoundingBox(userState[i], ctx);
+      }
+    }
+  }
 }
 
 /**
