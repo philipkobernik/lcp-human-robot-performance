@@ -9,6 +9,7 @@ ControlP5 cp5;
 
 Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput, radioButton;
 
+Trace trace;
 
 
 // ------ build plate ------
@@ -43,7 +44,7 @@ PVector generalCentroid = new PVector(0, 0);
 int trackedId = 0;
 
 void setup() {
-  size(1200, 1000);
+  size(1200, 1000, P3D);
   frameRate(60);
   cp5 = new ControlP5(this);
 
@@ -61,6 +62,7 @@ void setup() {
 
   // we position the printer nozzle in the middle of the canvas first
   nozzlePosition =  new PVector(width/2, height/2);
+  trace = new Trace();
 
   oscInLabel = cp5.addTextlabel("oscInLabel")
     .setText("OSC input: [ ]")
@@ -95,7 +97,7 @@ void setup() {
     .setColor(color(255, 0, 0))
     ;
 
-  List l = Arrays.asList("1", "2");
+  List l = Arrays.asList("group centroid", "ind. centroid");
   /* add a ScrollableList, by default it behaves like a DropdownList */
   radioButton = cp5.addScrollableList("dropdown")
     .setPosition(25, 10*25)
@@ -126,6 +128,7 @@ void draw() {
     oscOutLabel.setStringValue("OSC output: [ ]");
   }
 
+  trace.display(false);
   drawKeypoints();
 }
 
@@ -154,6 +157,7 @@ void drawKeypoints() {
 
   fill(0, 0, 255);
   ellipse(generalCentroid.x*2, generalCentroid.y*2, 30, 30);
+  trace.addPoint(new PVector(generalCentroid.x*2, generalCentroid.y*2));
 }
 
 void prepareUserHashMap(String idString) {
@@ -232,16 +236,14 @@ void oscEvent(OscMessage theOscMessage) {
       PVector targetCentroid = new PVector(sumX/partCount, sumY/partCount);
       currentCentroid.lerp(targetCentroid, 1 - 0.8);
       centroids.put(idString, currentCentroid);
+
+      participatoryMessage(parseInt(idString));
     }
     //}
-    participatoryMessage(parseInt(idString));
   }
 }
 
 void participatoryMessage(int id) {
-
-  generalCentroid.x = 0;
-  generalCentroid.y = 0;
 
   switch (participatoryMode) {
   case 0: // average all the individual centroids together
@@ -305,6 +307,6 @@ void dropdown(int n) {
   println(n);
 
   /*CColor c = new CColor();
-  c.setBackground(color(255, 0, 0));
-  cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);*/
+   c.setBackground(color(255, 0, 0));
+   cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);*/
 }
