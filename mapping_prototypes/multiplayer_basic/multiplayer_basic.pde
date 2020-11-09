@@ -7,7 +7,9 @@ OscP5 oscP5;
 NetAddress simulatorIAC;
 ControlP5 cp5;
 
-Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel;
+Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput;
+
+
 
 // ------ build plate ------
 int buildPlateWidth = 340;
@@ -34,6 +36,11 @@ float positionSmoothing = 0.25;
 // participatory option
 int participatoryMode = 0;
 PVector nozzlePosition;
+// mode 0
+HashMap<String, PVector> centroids = new HashMap<String, PVector>();
+PVector generalCentroid = new PVector(0, 0);
+// mode 1
+int trackedId = 0;
 
 void setup() {
   size(1200, 1000);
@@ -51,7 +58,7 @@ void setup() {
    * send messages back to this sketch.
    */
   simulatorIAC = new NetAddress("127.0.0.1", 10420);
-  
+
   // we position the printer nozzle in the middle of the canvas first
   nozzlePosition =  new PVector(width/2, height/2);
 
@@ -80,6 +87,12 @@ void setup() {
     .setPosition(25, 4*25)
     .setColorValue(0xffaaaaaa)
     .setFont(createFont("Courier", 15))
+    ;
+
+  textInput = cp5.addTextfield("trackedId")
+    .setPosition(25, 7*25)
+    .setFocus(true)
+    .setColor(color(255, 0, 0))
     ;
 }
 
@@ -122,8 +135,14 @@ void drawKeypoints() {
         //ellipse(point.x*2, point.y*2, random(base/3)+base, random(base/3)+base);
         ellipse(point.x*2, point.y*2, 10, 10);
       }
+
+      fill(255);
+      ellipse(centroids.get(idString).x*2, centroids.get(idString).y*2, 20, 20);
     }
   }
+
+  fill(0, 0, 255);
+  ellipse(generalCentroid.x*2, generalCentroid.y*2, 30, 30);
 }
 
 void prepareUserHashMap(String idString) {
@@ -158,6 +177,7 @@ void oscEvent(OscMessage theOscMessage) {
   float sumX = 0;
   float sumY = 0;
   int partCount = 0;
+
   if (theOscMessage.typetag().length() == 102) { // 17 arrays * 6 typetag chars per array
     String[] addressParts = theOscMessage.addrPattern().split("/");
     String idString = addressParts[4];
@@ -180,33 +200,65 @@ void oscEvent(OscMessage theOscMessage) {
         sumY += y;
         partCount++;
       }
+
       PVector current = group.get(idString).get(part);
       PVector target = new PVector(x, y, score);
       //velocities.put(part, PVector.sub(current, target));
-      current.lerp(target, 1-positionSmoothing);
+      current.lerp(target, 1 - positionSmoothing);
       group.get(idString).put(part, current); // score is stored as third component of the PVector
     }
 
     // now send some OSC messages to the LCP
     //PVector nose = positions.get("nose");
-    
-   // participatoryMessage(Stri);
-
+    //if (centroids.get(idString) == null){
     if (partCount > 0) {
-      PVector centroid = new PVector(sumX/partCount, sumY/partCount);
-      messagePrinter(centroid.x, centroid.y, true); // score is stored as third component of the PVector
-    } else {
-      // no parts are visible -- dancer is offscreen or not detected!
-      messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
+      PVector currentCentroid;
+      if (centroids.get(idString) == null) {
+        currentCentroid = new PVector(sumX/partCount, sumY/partCount);
+      } else {
+        currentCentroid = centroids.get(idString);
+      } 
+      PVector targetCentroid = new PVector(sumX/partCount, sumY/partCount);
+      currentCentroid.lerp(targetCentroid, 1 - 0.8);
+      centroids.put(idString, currentCentroid);
     }
+    //}
+    participatoryMessage(parseInt(idString));
   }
 }
 
-void participatoryMessage(){
-  switch (participatoryMode){
-    // goes from one individual to the other
-    case 0:
-     // if ()
+void participatoryMessage(int id) {
+
+  generalCentroid.x = 0;
+  generalCentroid.y = 0;
+
+  switch (participatoryMode) {
+  case 0: // average all the individual centroids together
+    float tempX = 0;
+    float tempY = 0;
+
+    for (String centroid : centroids.keySet()) {
+      tempX += centroids.get(centroid).x;
+      tempY += centroids.get(centroid).y;
+    }
+
+    generalCentroid.x = tempX/centroids.size();
+    generalCentroid.y = tempY/centroids.size();
+    break;
+  case 1: // goes from one individual to the other
+    if (trackedId == id) {
+      generalCentroid.x = centroids.get(""+id).x;
+      generalCentroid.y = centroids.get(""+id).y;
+    }
+    break;
+  }
+
+  // if at least one dancer being tracked?
+  if (generalCentroid.x > 0 && generalCentroid.y > 0) {
+    messagePrinter(generalCentroid.x, generalCentroid.y, true); // score is stored as third component of the PVector
+  } else {
+    // no parts are visible -- dancers are offscreen or not detected!
+    messagePrinter(0.0, 0.0, false); // score is stored as third component of the PVector
   }
 }
 
@@ -229,4 +281,10 @@ void messagePrinter(float x, float y, boolean flowActive) {
     flow.add(0.0);
   }
   oscP5.send(flow, simulatorIAC);
+}
+
+
+public void trackedId(String theText) {
+  // it becomes zero if not a number.  
+  trackedId = parseInt(theText);
 }
