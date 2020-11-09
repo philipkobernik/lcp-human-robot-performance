@@ -1,13 +1,13 @@
-import java.util.Map;
 import oscP5.*;
 import netP5.*;
 import controlP5.*;
+import java.util.*;
 
 OscP5 oscP5;
 NetAddress simulatorIAC;
 ControlP5 cp5;
 
-Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput;
+Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput, radioButton;
 
 
 
@@ -93,6 +93,17 @@ void setup() {
     .setPosition(25, 7*25)
     .setFocus(true)
     .setColor(color(255, 0, 0))
+    ;
+
+  List l = Arrays.asList("1", "2");
+  /* add a ScrollableList, by default it behaves like a DropdownList */
+  radioButton = cp5.addScrollableList("dropdown")
+    .setPosition(25, 10*25)
+    .setSize(200, 100)
+    .setBarHeight(20)
+    .setItemHeight(20)
+    .addItems(l)
+    // .setType(ScrollableList.LIST) // currently supported DROPDOWN and LIST
     ;
 }
 
@@ -287,4 +298,13 @@ void messagePrinter(float x, float y, boolean flowActive) {
 public void trackedId(String theText) {
   // it becomes zero if not a number.  
   trackedId = parseInt(theText);
+}
+
+void dropdown(int n) {
+  participatoryMode = n;
+  println(n);
+
+  /*CColor c = new CColor();
+  c.setBackground(color(255, 0, 0));
+  cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);*/
 }
