@@ -42,6 +42,8 @@ HashMap<String, PVector> centroids = new HashMap<String, PVector>();
 PVector generalCentroid = new PVector(0, 0);
 // mode 1
 int trackedId = 0;
+int scaledWidth = 1200;
+int scaledHeight = 1000;
 
 void setup() {
   size(1200, 1000, P3D);
@@ -134,6 +136,8 @@ void draw() {
 
 void drawKeypoints() {
   for (String idString : group.keySet()) {
+    drawConnections(group.get(idString));
+    
     for (String part : group.get(idString).keySet()) {
       PVector point = group.get(idString).get(part);
       //PVector velocity = velocities.get(part);
@@ -151,13 +155,63 @@ void drawKeypoints() {
       }
 
       fill(255);
-        ellipse(centroids.get(idString).x*2, centroids.get(idString).y*2, 20, 20);
+      ellipse(centroids.get(idString).x*2, centroids.get(idString).y*2, 20, 20);
     }
   }
 
   fill(0, 0, 255);
   ellipse(generalCentroid.x*2, generalCentroid.y*2, 30, 30);
   trace.addPoint(new PVector(generalCentroid.x*2, generalCentroid.y*2));
+}
+
+void drawLine(PVector p1, PVector p2) {
+    if (p1.z > 0.5 && p2.z > 0.5) {
+      line(
+        map(p1.x, 0, 600, 0, scaledWidth), 
+        map(p1.y, 0, 500, 0, scaledHeight), 
+        map(p2.x, 0, 600, 0, scaledWidth), 
+        map(p2.y, 0, 500, 0, scaledHeight)
+        );
+    }
+  }
+
+void drawConnections(HashMap<String,PVector> poses) {
+  stroke(200, 100);
+  strokeWeight(2);
+  PVector lShoulder = poses.get("leftShoulder");
+  PVector rShoulder = poses.get("rightShoulder");
+  drawLine(lShoulder, rShoulder);
+
+  // Left Arm
+  PVector lElbow = poses.get("leftElbow");
+  drawLine(lShoulder, lElbow);
+  PVector lWrist = poses.get("leftWrist");
+  drawLine(lElbow, lWrist);
+
+  // Right Arm
+  PVector rElbow = poses.get("rightShoulder");
+  drawLine(rShoulder, rElbow);
+  PVector rWrist = poses.get("rightWrist");
+  drawLine(rElbow, rWrist);
+
+  // Trunk
+  PVector lHip = poses.get("leftHip");
+  PVector rHip = poses.get("rightHip");
+  drawLine(lHip, rHip);
+  drawLine(lShoulder, lHip);
+  drawLine(rShoulder, rHip);
+
+  // Left Leg
+  PVector lKnee = poses.get("leftKnee");
+  drawLine(lHip, lKnee);
+  PVector lAnkle = poses.get("leftAnkle");
+  drawLine(lKnee, lAnkle);
+
+  // Left Leg
+  PVector rKnee = poses.get("rightKnee");
+  drawLine(rHip, rKnee);
+  PVector rAnkle = poses.get("rightAnkle");
+  drawLine(rKnee, rAnkle);
 }
 
 void prepareUserHashMap(String idString) {
