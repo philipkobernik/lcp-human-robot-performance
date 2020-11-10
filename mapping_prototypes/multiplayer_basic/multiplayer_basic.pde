@@ -101,7 +101,7 @@ void setup() {
 
   List l = Arrays.asList("group centroid", "ind. centroid");
   /* add a ScrollableList, by default it behaves like a DropdownList */
-  radioButton = cp5.addScrollableList("dropdown")
+  radioButton = cp5.addScrollableList("participation_Mode")
     .setPosition(25, 7*25)
     .setSize(200, 100)
     .setBarHeight(20)
@@ -406,7 +406,7 @@ void names(int n){
   trackedId = n;
 }
 
-void dropdown(int n) {
+void participation_Mode(int n) {
   participatoryMode = n;
   println(n);
 
