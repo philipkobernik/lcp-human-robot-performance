@@ -151,7 +151,7 @@ void drawKeypoints() {
       }
 
       fill(255);
-      ellipse(centroids.get(idString).x*2, centroids.get(idString).y*2, 20, 20);
+        ellipse(centroids.get(idString).x*2, centroids.get(idString).y*2, 20, 20);
     }
   }
 
@@ -309,4 +309,17 @@ void dropdown(int n) {
   /*CColor c = new CColor();
    c.setBackground(color(255, 0, 0));
    cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);*/
+}
+
+void keyReleased() {
+  if (key == 's' || key == 'S') writeCSV();
+  if (key == 'x' || key == 'X') reset();
+}
+
+void reset() {
+  trace.resetDrawing();
+}
+
+void writeCSV() {
+  trace.writeCSV();
 }

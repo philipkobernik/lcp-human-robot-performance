@@ -67,4 +67,10 @@ class Trace { //<>// //<>// //<>//
   void addPoint(PVector p) {
     path.add(p);
   }
+  void resetDrawing() {
+    path.clear();
+  }
+  void writeCSV() {
+    println("write CSV");
+  }
 }
