@@ -14,19 +14,57 @@ var firebaseConfig = {
     appId: process.env.FIREBASE_APP_ID
   };
 
-  let usersList = ["mark", "sam", "brooke", "philip"];
+let usersList = [
+"clareanneyagustin",
+"jaliana",
+"gaustin",
+"leahzbasnight",
+"meganbaytosh",
+"amity",
+"nataliebianchi",
+"cmcargnoni",
+"elisacastillo",
+"jchin",
+"mcolehower",
+"bdodgion",
+"emilyeckert",
+"sydneygottlieb",
+"miagriff",
+"j_a_hayes",
+"eisroelit",
+"madelinejosa",
+"cheuk-kwan",
+"ninalopez",
+"emmarose",
+"cmccarthy",
+"kyliemccreary",
+"isabelmeena",
+"dalyamodlin",
+"linapersson",
+"katrinareinart",
+"sshahgholian",
+"devynshanley",
+"tabithastewart",
+"s_yuen",
+"kearazengel",
+"lzorba",
+"mark",
+"sam",
+"brooke",
+"philip"
+];
 
-  let userId = process.argv.length > 2 ? process.argv[2] : 'default';
-  firebase.initializeApp(firebaseConfig);
-  var db = firebase.database();
-  //var playbackRef = db.ref(`users/${userId}/playback`);
-  var audioTriggerRef = db.ref("audio/trigger");
-  var focusPartRef = db.ref("ui/control/focusPart");
-  var recordingRef = db.ref("ui/control/recording");
+let userId = process.argv.length > 2 ? process.argv[2] : 'default';
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+//var playbackRef = db.ref(`users/${userId}/playback`);
+var audioTriggerRef = db.ref("audio/trigger");
+var focusPartRef = db.ref("ui/control/focusPart");
+var recordingRef = db.ref("ui/control/recording");
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
-    localAddress: "0.0.0.0",
+  localAddress: "0.0.0.0",
     localPort: 99999,
     remoteAddress: "0.0.0.0",
     remotePort: 10419,
@@ -75,10 +113,10 @@ recordingRef.on("value", function(snapshot) {
     });
 })
 
-var snapshotHandler = function(index, snapshot) { // creates a listener -- or a binding to firebase server
+var snapshotHandler = function(index, handle, snapshot) { // creates a listener -- or a binding to firebase server
   var keypoints = snapshot.val();
   if(!keypoints) {
-    console.error(`Error: there is no user ______ on firebase`);
+    console.error(`Error: there is no user ${handle} on firebase`);
     console.error("Perhaps you need to open the posenet tracker to initialize the user");
     return false;
   };
@@ -119,7 +157,7 @@ var arrayOfRefs = usersList.map(function(user) {
 
 for(var i=0; i<usersList.length; i++) {
   var addr = `users/${usersList[i]}/playback`;
-  arrayOfRefs[i].on("value", snapshotHandler.bind(null, i));
+  arrayOfRefs[i].on("value", snapshotHandler.bind(null, i, usersList[i]));
 }
 
 console.log("\nwelcome to firebase_osc_relay!\n")
