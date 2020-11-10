@@ -7,7 +7,7 @@ OscP5 oscP5;
 NetAddress simulatorIAC;
 ControlP5 cp5;
 
-Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput, radioButton;
+Controller oscInLabel, oscOutLabel, positionSmoothingSlider, troubleshootingLabel, textInput, radioButton, nameDropdown;
 
 Trace trace;
 
@@ -93,20 +93,66 @@ void setup() {
     .setFont(createFont("Courier", 15))
     ;
 
-  textInput = cp5.addTextfield("trackedId")
+  /*textInput = cp5.addTextfield("trackedId")
     .setPosition(25, 7*25)
     .setFocus(true)
     .setColor(color(255, 0, 0))
-    ;
+    ;*/
 
   List l = Arrays.asList("group centroid", "ind. centroid");
   /* add a ScrollableList, by default it behaves like a DropdownList */
   radioButton = cp5.addScrollableList("dropdown")
-    .setPosition(25, 10*25)
+    .setPosition(25, 7*25)
     .setSize(200, 100)
     .setBarHeight(20)
     .setItemHeight(20)
     .addItems(l)
+    // .setType(ScrollableList.LIST) // currently supported DROPDOWN and LIST
+    ;
+
+  List l2 = Arrays.asList("clareanneyagustin", 
+    "jaliana", 
+    "gaustin", 
+    "leahzbasnight", 
+    "meganbaytosh", 
+    "amity", 
+    "nataliebianchi", 
+    "cmcargnoni", 
+    "elisacastillo", 
+    "jchin", 
+    "mcolehower", 
+    "bdodgion", 
+    "emilyeckert", 
+    "sydneygottlieb", 
+    "miagriff", 
+    "j_a_hayes", 
+    "eisroelit", 
+    "madelinejosa", 
+    "cheuk-kwan", 
+    "ninalopez", 
+    "emmarose", 
+    "cmccarthy", 
+    "kyliemccreary", 
+    "isabelmeena", 
+    "dalyamodlin", 
+    "linapersson", 
+    "katrinareinart", 
+    "sshahgholian", 
+    "devynshanley", 
+    "tabithastewart", 
+    "s_yuen", 
+    "kearazengel", 
+    "lzorba", 
+    "mark", 
+    "sam", 
+    "brooke", 
+    "philip");
+  nameDropdown = cp5.addScrollableList("names")
+    .setPosition(25, 10*25)
+    .setSize(200, 100)
+    .setBarHeight(20)
+    .setItemHeight(20)
+    .addItems(l2)
     // .setType(ScrollableList.LIST) // currently supported DROPDOWN and LIST
     ;
 }
@@ -137,7 +183,7 @@ void draw() {
 void drawKeypoints() {
   for (String idString : group.keySet()) {
     drawConnections(group.get(idString));
-    
+
     for (String part : group.get(idString).keySet()) {
       PVector point = group.get(idString).get(part);
       //PVector velocity = velocities.get(part);
@@ -165,17 +211,17 @@ void drawKeypoints() {
 }
 
 void drawLine(PVector p1, PVector p2) {
-    if (p1.z > 0.5 && p2.z > 0.5) {
-      line(
-        map(p1.x, 0, 600, 0, scaledWidth), 
-        map(p1.y, 0, 500, 0, scaledHeight), 
-        map(p2.x, 0, 600, 0, scaledWidth), 
-        map(p2.y, 0, 500, 0, scaledHeight)
-        );
-    }
+  if (p1.z > 0.5 && p2.z > 0.5) {
+    line(
+      map(p1.x, 0, 600, 0, scaledWidth), 
+      map(p1.y, 0, 500, 0, scaledHeight), 
+      map(p2.x, 0, 600, 0, scaledWidth), 
+      map(p2.y, 0, 500, 0, scaledHeight)
+      );
   }
+}
 
-void drawConnections(HashMap<String,PVector> poses) {
+void drawConnections(HashMap<String, PVector> poses) {
   stroke(200, 100);
   strokeWeight(2);
   PVector lShoulder = poses.get("leftShoulder");
@@ -354,6 +400,10 @@ void messagePrinter(float x, float y, boolean flowActive) {
 public void trackedId(String theText) {
   // it becomes zero if not a number.  
   trackedId = parseInt(theText);
+}
+
+void names(int n){
+  trackedId = n;
 }
 
 void dropdown(int n) {
