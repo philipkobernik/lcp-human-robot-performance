@@ -28,8 +28,8 @@ import db from './firebaseInit'
 import "firebase/auth";
 import "firebase/firestore";
 
-const videoWidth = 600;
-const videoHeight = 500;
+const videoWidth = 1920;
+const videoHeight = 1080;
 const stats = new Stats();
 
 let frameCountDisplayController = null;
@@ -104,15 +104,15 @@ const defaultMobileNetInputResolution = 500;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
-const defaultResNetInputResolution = 250;
+const defaultResNetInputResolution = {width: 548, height: 308};
 
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    architecture: 'MobileNetV1',
-    outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
-    multiplier: defaultMobileNetMultiplier,
+    architecture: 'ResNet50',
+    outputStride: defaultResNetStride,
+    inputResolution: defaultResNetInputResolution,
+    multiplier: defaultResNetMultiplier,
     quantBytes: defaultQuantBytes
   },
   singlePoseDetection: {
