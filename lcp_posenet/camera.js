@@ -77,7 +77,7 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'video': {
-      deviceId: "78254b5a2e4f7302f1ee826fc3bb7a95fd6b4be9bb6f37973823ffd8672bb58b"
+      deviceId: "c9bb4c23f0c51661af9bbbf5ff0530d991245154566348b1ebb999a0941332f3"
     }
   })
   video.srcObject = stream;
