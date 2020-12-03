@@ -40,14 +40,17 @@ int currentPlaybackSequence = 0;
 
 int toggleTracesStyle = 1;
 
-int scaledWidth = 1200;
-int scaledHeight = 1000;
+int inputCoordsHeight = 1080;
+int inputCoordsWidth = 1920;
+
+int scaledWidth = 960;
+int scaledHeight = 540;
 
 String focusPart = "nose";
 BodyParts bodyPartsManager;
 
 void setup() {
-  size(1200, 1000, P3D);
+  size(960, 540, P3D);
   frameRate(20);
   cp5 = new ControlP5(this);
 
@@ -175,16 +178,16 @@ void drawKeypoints() {
     String partName = keypoint.getKey();
 
     if (point.z > 0.5) {
-      float r = map(point.x, 0, 600, 64, 255);
-      float g = map(point.y, 0, 500, 64, 255);
+      float r = map(point.x, 0, inputCoordsWidth, 64, 255);
+      float g = map(point.y, 0, inputCoordsHeight, 64, 255);
       float b = 100;
 
       noStroke();
 
       fill(r, g, b);
       ellipse(
-        map(point.x, 0, 600, 0, scaledWidth), 
-        map(point.y, 0, 500, 0, scaledHeight), 
+        map(point.x, 0, inputCoordsWidth, 0, scaledWidth), 
+        map(point.y, 0, inputCoordsHeight, 0, scaledHeight), 
         random(6)+13, 
         random(6)+13
         );
@@ -212,8 +215,8 @@ void drawKeypoints() {
   //body part where focus is on
   fill(255, 255, 255);
   ellipse(
-    map(bodyPartsManager.position(focusPart).x, 0, 600, 0, scaledWidth), 
-    map(bodyPartsManager.position(focusPart).y, 0, 500, 0, scaledHeight), 
+    map(bodyPartsManager.position(focusPart).x, 0, inputCoordsWidth, 0, scaledWidth), 
+    map(bodyPartsManager.position(focusPart).y, 0, inputCoordsHeight, 0, scaledHeight), 
     random(6)+26, 
     random(6)+26
     );
@@ -301,8 +304,8 @@ void oscEvent(OscMessage message) {
 
 void messagePrinter(float x, float y, boolean flowActive) {
   outFlash = true;
-  float xOut = map(x, 0, 600, 0, buildPlateWidth-1);
-  float yOut = map(y, 0, 500, 0, buildPlateHeight-1);
+  float xOut = map(x, 0, inputCoordsWidth, 0, buildPlateWidth-1);
+  float yOut = map(y, 0, inputCoordsHeight, 0, buildPlateHeight-1);
 
   OscMessage position = new OscMessage("/lcp/control/position");
 
