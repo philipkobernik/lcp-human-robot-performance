@@ -51,6 +51,7 @@ BodyParts bodyPartsManager;
 
 void setup() {
   size(960, 540, P3D);
+
   frameRate(20);
   cp5 = new ControlP5(this);
 
@@ -171,11 +172,14 @@ void drawTraces() {
 
 void drawKeypoints() {
   if(keypoints.size() == 0) return;
-
+  stroke(255,0,0);
+  strokeWeight(5);
+  drawConnections(keypoints);
 
   for (Map.Entry<String, PVector> keypoint : keypoints.entrySet()) {
     PVector point = keypoint.getValue();
     String partName = keypoint.getKey();
+    
 
     if (point.z > 0.5) {
       float r = map(point.x, 0, inputCoordsWidth, 64, 255);
@@ -184,7 +188,8 @@ void drawKeypoints() {
 
       noStroke();
 
-      fill(r, g, b);
+      //fill(r, g, b);
+      fill(255,0,0);
       ellipse(
         map(point.x, 0, inputCoordsWidth, 0, scaledWidth), 
         map(point.y, 0, inputCoordsHeight, 0, scaledHeight), 
@@ -213,7 +218,7 @@ void drawKeypoints() {
   }
 
   //body part where focus is on
-  fill(255, 255, 255);
+  //fill(255, 255, 255);
   ellipse(
     map(bodyPartsManager.position(focusPart).x, 0, inputCoordsWidth, 0, scaledWidth), 
     map(bodyPartsManager.position(focusPart).y, 0, inputCoordsHeight, 0, scaledHeight), 
@@ -356,4 +361,52 @@ void keyReleased() {
 void what_part_draws(int dropdownIndex) {
   /* request the selected item based on index n */
   focusPart = (String)cp5.get(ScrollableList.class, "what_part_draws").getItem(dropdownIndex).get("text");
+}
+
+void drawLine(PVector p1, PVector p2) {
+  if (p1.z > 0.5 && p2.z > 0.5) {
+    line(
+      map(p1.x, 0, inputCoordsWidth, 0, scaledWidth),
+      map(p1.y, 0, inputCoordsHeight, 0, scaledHeight), 
+      map(p2.x, 0, inputCoordsWidth, 0, scaledWidth), 
+      map(p2.y, 0, inputCoordsHeight, 0, scaledHeight)
+      );
+  }
+}
+
+void drawConnections(HashMap<String, PVector> poses) {
+  PVector lShoulder = poses.get("leftShoulder");
+  PVector rShoulder = poses.get("rightShoulder");
+  drawLine(lShoulder, rShoulder);
+
+  // Left Arm
+  PVector lElbow = poses.get("leftElbow");
+  drawLine(lShoulder, lElbow);
+  PVector lWrist = poses.get("leftWrist");
+  drawLine(lElbow, lWrist);
+
+  // Right Arm
+  PVector rElbow = poses.get("rightShoulder");
+  drawLine(rShoulder, rElbow);
+  PVector rWrist = poses.get("rightWrist");
+  drawLine(rElbow, rWrist);
+
+  // Trunk
+  PVector lHip = poses.get("leftHip");
+  PVector rHip = poses.get("rightHip");
+  drawLine(lHip, rHip);
+  drawLine(lShoulder, lHip);
+  drawLine(rShoulder, rHip);
+
+  // Left Leg
+  PVector lKnee = poses.get("leftKnee");
+  drawLine(lHip, lKnee);
+  PVector lAnkle = poses.get("leftAnkle");
+  drawLine(lKnee, lAnkle);
+
+  // Left Leg
+  PVector rKnee = poses.get("rightKnee");
+  drawLine(rHip, rKnee);
+  PVector rAnkle = poses.get("rightAnkle");
+  drawLine(rKnee, rAnkle);
 }
