@@ -21,12 +21,25 @@ const startRecording = () => {
   db.ref('ui/control/recording').set(true);
 }
 
+const stopLive = () => {
+  db.ref('ui/control/live').set(false);
+}
+const startLive = () => {
+  db.ref('ui/control/live').set(true);
+}
+
 const Index = props => {
   const [partVal, partLoading, partError] = useObjectVal(db.ref('ui/control/focusPart'));
   const [recordingVal, recordingLoading, recordingError] = useObjectVal(db.ref('ui/control/recording'));
+  const [liveVal, liveLoading, liveError] = useObjectVal(db.ref('ui/control/live'));
 
   const toggleButton = recordingVal ? (<button onClick={stopRecording}>stop</button>) : (<button onClick={startRecording}>start</button>);
+
+  const liveOrSequenceButton = liveVal ? (<button onClick={stopLive}>Sequence</button>) : (<button onClick={startLive}>Live</button>);
+
   const statusEmoji = recordingVal ? "🔴" : "⚪";
+
+  const liveEmoji = liveVal ? "LIVE Mode" : "Sequence Mode";
 
   return (
     <Layout>
@@ -50,6 +63,9 @@ const Index = props => {
 
       <h3>recording: {statusEmoji}</h3>
       { toggleButton }
+
+      <h3>control mode: {liveEmoji}</h3>
+      { liveOrSequenceButton }
     </Layout>
   );
 

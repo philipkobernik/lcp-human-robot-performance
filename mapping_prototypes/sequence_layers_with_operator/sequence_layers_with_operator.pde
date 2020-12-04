@@ -35,6 +35,7 @@ int currentSequence = 0;
 int currentLoop = 0;
 
 boolean recording = false;
+boolean liveMode = false;
 
 int currentPlaybackSequence = 0;
 
@@ -140,19 +141,32 @@ void draw() {
   rect(0, 0, width, height);
 
   // FOR PLAYBACK
-  if (sequences.size() > currentPlaybackSequence && !getPlaybackSeq().isRecording()) {
-    // -- ask current seq if its done?
-    if (getPlaybackSeq().isDone()) {
-      // advance to next sequence
-      currentPlaybackSequence++;
-      currentTime = millis();
-      //currentPlaybackSequence = (currentPlaybackSequence + 1) % sequences.size(); // loop around here
-    } else {
-      if (millis()-currentTime > timer) {
-        getPlaybackSeq().incrementIndex();
+  if(liveMode) {
+    // display
+    
+    // message printer
+    messagePrinter(
+      bodyPartsManager.position(focusPart).x,
+      bodyPartsManager.position(focusPart).y,
+      true
+     );
+    
+  } else {
+    
+    if (sequences.size() > currentPlaybackSequence && !getPlaybackSeq().isRecording()) {
+      // -- ask current seq if its done?
+      if (getPlaybackSeq().isDone()) {
+        // advance to next sequence
+        currentPlaybackSequence++;
         currentTime = millis();
+        //currentPlaybackSequence = (currentPlaybackSequence + 1) % sequences.size(); // loop around here
+      } else {
+        if (millis()-currentTime > timer) {
+          getPlaybackSeq().incrementIndex();
+          currentTime = millis();
+        }
+        getPlaybackSeq().display();
       }
-      getPlaybackSeq().display();
     }
   }
 
@@ -280,7 +294,7 @@ void oscEvent(OscMessage message) {
 
 
     // add pose and centroid to the sequence 
-    if (recording) {
+    if (recording && !liveMode) { // don't add to sequence if liveMode is ON
       sequences.get(sequences.size()-1).addPose(
         new HashMap<String, PVector>(keypoints),
         new PVector(bodyPartsManager.position(focusPart).x/2, bodyPartsManager.position(focusPart).y/2)
@@ -304,6 +318,19 @@ void oscEvent(OscMessage message) {
       // end the sequence, maybe calculate number loops or something
       sequences.get(sequences.size()-1).stopRecording();
     }
+  }
+  
+    if (message.checkAddrPattern("/lcp/control/live")) {
+    int isLive = message.get(0).intValue();
+
+    liveMode = isLive == 1; // manually re-cast from integer to boolean in java
+
+    //if (liveMode) {
+    //  sequences.add(new Sequence());
+    //} else {
+    //  // end the sequence, maybe calculate number loops or something
+    //  sequences.get(sequences.size()-1).stopRecording();
+    //}
   }
 }
 
@@ -375,6 +402,7 @@ void drawLine(PVector p1, PVector p2) {
 }
 
 void drawConnections(HashMap<String, PVector> poses) {
+  if (poses.size() > 0) {
   PVector lShoulder = poses.get("leftShoulder");
   PVector rShoulder = poses.get("rightShoulder");
   drawLine(lShoulder, rShoulder);
@@ -409,4 +437,5 @@ void drawConnections(HashMap<String, PVector> poses) {
   drawLine(rHip, rKnee);
   PVector rAnkle = poses.get("rightAnkle");
   drawLine(rKnee, rAnkle);
+  }
 }
