@@ -30,6 +30,7 @@ var firebaseConfig = {
   var audioTriggerRef = db.ref("audio/trigger");
   var focusPartRef = db.ref("ui/control/focusPart");
   var recordingRef = db.ref("ui/control/recording");
+  var liveRef = db.ref("ui/control/live");
 
 // config and open udp port
 var udpPort = new osc.UDPPort({
@@ -92,6 +93,20 @@ recordingRef.on("value", function(snapshot) {
         {
           type: "i",
           value: isRecording ? 1 : 0 // transformed to 0/1 ints
+        }
+      ]
+    });
+})
+
+liveRef.on("value", function(snapshot) {
+  var isLive = snapshot.val(); // JS boolean
+
+  udpPort.send({
+      address: "/lcp/control/live",
+      args: [
+        {
+          type: "i",
+          value: isLive ? 1 : 0 // transformed to 0/1 ints
         }
       ]
     });
