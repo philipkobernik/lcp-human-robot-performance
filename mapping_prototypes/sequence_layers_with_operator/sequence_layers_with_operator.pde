@@ -283,7 +283,7 @@ void oscEvent(OscMessage message) {
     if (recording) {
       sequences.get(sequences.size()-1).addPose(
         new HashMap<String, PVector>(keypoints),
-        new PVector(bodyPartsManager.position(focusPart).x, bodyPartsManager.position(focusPart).y)
+        new PVector(bodyPartsManager.position(focusPart).x/2, bodyPartsManager.position(focusPart).y/2)
         );
     }
   }
