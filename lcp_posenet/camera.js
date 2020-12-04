@@ -77,9 +77,14 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'video': {
-      deviceId: "c9bb4c23f0c51661af9bbbf5ff0530d991245154566348b1ebb999a0941332f3"
+      // deviceId: "c9bb4c23f0c51661af9bbbf5ff0530d991245154566348b1ebb999a0941332f3",
+      mandatory: {
+      minWidth: 1920,
+      minHeight: 1080
     }
-  })
+  }
+});
+    
   video.srcObject = stream;
 
   return new Promise((resolve) => {
@@ -678,7 +683,18 @@ export async function bindPage() {
   }
 
   setupGui([], net);
-  setupFPS();
+  // setupFPS();
+
+  let toggle = true;
+
+  window.addEventListener("keydown", function(e) {
+    if(e.key == 'g') {
+      toggle = !toggle;
+      let guiElement = document.getElementsByClassName("dg ac")[0];
+      guiElement.style.display = toggle ? 'block' : 'none';
+    }
+  });
+
   detectPoseInRealTime(video, net);
 }
 
