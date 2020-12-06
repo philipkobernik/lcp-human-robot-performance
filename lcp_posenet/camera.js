@@ -686,12 +686,19 @@ export async function bindPage() {
   // setupFPS();
 
   let toggle = true;
+  let toggleSkeleton = true;
 
   window.addEventListener("keydown", function(e) {
     if(e.key == 'g') {
       toggle = !toggle;
       let guiElement = document.getElementsByClassName("dg ac")[0];
       guiElement.style.display = toggle ? 'block' : 'none';
+    }
+
+    if(e.key == 's') {
+      toggleSkeleton = !toggleSkeleton;
+      guiState.output.showSkeleton = toggleSkeleton;
+      guiState.output.showPoints = false;
     }
   });
 
